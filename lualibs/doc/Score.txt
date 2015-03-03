@@ -77,7 +77,7 @@ by a constant value. value sets the initial value of the line. (0 default)
 
 		value
 	jump: jump to a value and output it (with route pattern)
-	setf(infunc): infunc is either a table in the form {{array arg arg etc.} 
+	setf(infunc): infunc is a table in the form {{array arg arg etc.} 
 		position}, see compat.route for reference. (line uses route internally).
 		infunc is set the f argument initially
 	time(incr): set the time for the time difference between values (defaults to
