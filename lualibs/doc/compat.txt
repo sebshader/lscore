@@ -1,14 +1,25 @@
 compat.lua reference:
 
-compat contains patterns. patterns are structures (tables) which respond to the next() method. compat.ispatt(pattern) also returns true, it checks that the returned object (referred to here as patobj) has patt field which is set to true
+compat contains patterns. patterns are structures (tables) which respond to the
+next() method. compat.ispatt(pattern) also returns true, it checks that the
+returned object (referred to here as patobj) has patt field which is set to true
 
 ispatt(pattern): described above
 
-handler(input, count, nextcount): this function is for dealing with next() calls with repeats. if the input is a pattern, next() is called on it. if input is a function, the function is called. if input is a table, then if table[1] is a pattern and table[2] is a number then handler returns (input, nextcount) (2 return values). Handler stores the current countdown in table[3], and when it gets to 0 it resets and returns (input, count). If not in the form {pattern, count}, then handler returns (input, count) anyways.
+handler(input, count, nextcount): this function is for dealing with next() calls
+with repeats. if the input is a pattern, next() is called on it. if input is a
+function, the function is called. if input is a table, then if table[1] is a
+pattern and table[2] is a number then handler returns (input, nextcount) (2
+return values). Handler stores the current countdown in table[3], and when it
+gets to 0 it resets and returns (input, count). If not in the form {pattern,
+count}, then handler returns (input, count) anyways.
 
-The following are the actual patterns: they return objects that can be called with these methods:
+The following are the actual patterns: they return objects that can be called
+with these methods:
 
-rhydist(pos, out, rep): returns pattern which chooses out items out of pos items randomly, and if rep is true it will repeat. pos and out should be positive integers, with out < pos. pos defaults to 4
+rhydist(pos, out, rep): returns pattern which chooses out items out of pos items
+randomly, and if rep is true it will repeat. pos and out should be positive
+integers, with out < pos. pos defaults to 4
 	next(): returns the difference between the last value and the next value in
 		the sequence of randomly chosen times. The output is normalized to 0 - 1
 		(so there will be out # of evenly spaced numbers based on pos divisions
@@ -17,16 +28,19 @@ rhydist(pos, out, rep): returns pattern which chooses out items out of pos items
 	reset(): start new rhythm
 
 
-urn(size): based on pdlua's urn example, chooses size items from 1 to size with no repeats. size defaults to 12
+urn(size): based on pdlua's urn example, chooses size items from 1 to size with
+no repeats. size defaults to 12
 	reset(): reset urn
 	rem(number): removes number from remaining choices. returns true on success,
 		else returns nil
-	size(size, bool): set a new size. if not bool then already chosen members 		
+	size(size, bool): set a new size. if not bool then already chosen members
+		
 		from the last active urn will be removed
 	next(): returns non-repeating random integers between 1 and size
 
 
-walk(inargs): makes a pattern that walks in a certain way. Inargs is a table and can have arguments in the following locations:
+walk(inargs): makes a pattern that walks in a certain way. Inargs is a table and
+can have arguments in the following locations:
 	[1] or "low": lower bound of the walk
 	[2] or "high": higher bound
 	[3] or mode: walk drunkenly or in a straight line
@@ -63,7 +77,8 @@ walker(intable, walkargs): walks over intable with a walk pattern. (above)
 	add(item, pos, bool): adds an item to the array at pos, if not bool then 
 		the range changes also
 	rem(pos, bool): same, but removes.
-	next(step): gets next item in the array. note that repeats are respected, so 
+	next(step): gets next item in the array. note that repeats are respected, so
+
 		an item of form {pattern, repeats} will repeat the pattern repeats times
 		before moving on
 	reset(): set the state to 1
@@ -82,7 +97,8 @@ weight(intable): make a table of weightings. for each item in intable:
 	mod(item, weight): adds weight to item
 	rem(item): removes item
 	clear(): clear entire structure
-	next(): get random item according to the weighting of the items (more weight 
+	next(): get random item according to the weighting of the items (more weight
+
 		= more likely to be chosen)
 	get(item): get weighting for item
 
@@ -91,7 +107,8 @@ par(intable): keeps an array of patterns and returns a parallel array of
 patterns on each next() call by calling next() on each of the patterns
 	set(), add(), rem(): the same as for walker pattern, except no booleans for
 		changing the range of a walk pattern (because there is none)
-	next(): as described above, each item in intable has handler called, and any 
+	next(): as described above, each item in intable has handler called, and any
+
 		repeats are repeats in the final array returned by next()
 
 
@@ -101,7 +118,9 @@ time next() is called
 	next(): return val, unless val is a function in which case returns val()
 
 
-route(inpat, mtx): route takes a pattern, and every time next() is called on route, next() is called on pattern. This is the most complicated pattern here so far. the result of the pattern is routed in the following way:
+route(inpat, mtx): route takes a pattern, and every time next() is called on
+route, next() is called on pattern. This is the most complicated pattern here so
+far. the result of the pattern is routed in the following way:
 	mtx: the routing matrix:
 		in the form of an array with members [index] = table
 		the table is in the form: {{destination, arg, arg, ...}, optindex}
@@ -125,7 +144,9 @@ route(inpat, mtx): route takes a pattern, and every time next() is called on rou
 	c: the pattern to call
 	next(): get the next item from route
 
-pipe(inpat, f, bool, switch): calls f on output of inpat.next() each time next() is called using comp.route (f must be a table for comp.route). if bool then returns the value resulting from this call
+pipe(inpat, f, bool, switch): calls f on output of inpat.next() each time next()
+is called using comp.route (f must be a table for comp.route). if bool then
+returns the value resulting from this call
 	c: pattern (inpat in the arguments)
 	f: the function to call on the output of next() (only 1 arg)
 	ret: boolean, whether to return or not (bool in arguments)

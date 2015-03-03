@@ -2,13 +2,18 @@ Score.lua user function reference
 the values mentioned here are created/manipulated with musenv stuff
 These functions and variables can be used by the end user of Score.lua:
 
-this: variable that holds the current score object. Everything is accessible through this variable
+this: variable that holds the current score object. Everything is accessible
+through this variable
 
 
-add(f, time, bool, ...): add a function f to the scheduler that will be called back in time from now. bool resets the measure counter if true. the varargs are saved to be called on f when it is f's turn.
-Note that functions that are add()ed should not also be called by other functions that were add()ed because their current environments might conflict
+add(f, time, bool, ...): add a function f to the scheduler that will be called
+back in time from now. bool resets the measure counter if true. the varargs are
+saved to be called on f when it is f's turn.
+Note that functions that are add()ed should not also be called by other
+functions that were add()ed because their current environments might conflict
 also:
-this.curENV gets the current environment, to which the current function may manually be set to in order to circumvent this issue.
+this.curENV gets the current environment, to which the current function may
+manually be set to in order to circumvent this issue.
 
 
 inbeats(beats): get the number of milliseconds based on the current beat value
@@ -18,20 +23,29 @@ addfnow(f, ...) add now with no time and no resetting of measure values
 
 gettime() get the current time according to the score object
 
-pnotef(name, beginf, nendf) makes a "global" function with name "name" and arguments dur, bargs, eargs where dur is a number of beats. when this function is called, beginf is called with unpacked bargs, then after dur nendf is similarly called with unpacked eargs. this is meant to play notes with noteon and noteoff
+pnotef(name, beginf, nendf) makes a "global" function with name "name" and
+arguments dur, bargs, eargs where dur is a number of beats. when this function
+is called, beginf is called with unpacked bargs, then after dur nendf is
+similarly called with unpacked eargs. this is meant to play notes with noteon
+and noteoff
 
-delay(time, ...): delay current environment by time milliseconds. The varargs are for passing back to the queue for possible manipulation
+delay(time, ...): delay current environment by time milliseconds. The varargs
+are for passing back to the queue for possible manipulation
 
 bdelay(beats, ...): delay by beats
 
-fdelay(f, deltime, ...): call f (which is a table) with comp.fcall and then delay by deltime
+fdelay(f, deltime, ...): call f (which is a table) with comp.fcall and then
+delay by deltime
 
 bfdelay(f, beats, ...): same with beats
 
 setg(key, value): set global (loadENV) variable key to value
 getg(key): get global key
 
-pplayer(pattern, time, mult): returns a player that plays a pattern in the scheduler, calling next() mult times on it. time is the amount of time to delay every time. However, if the pattern.next() returns, then that is used as the delay. Time can be a pattern.
+pplayer(pattern, time, mult): returns a player that plays a pattern in the
+scheduler, calling next() mult times on it. time is the amount of time to delay
+every time. However, if the pattern.next() returns, then that is used as the
+delay. Time can be a pattern.
 	time(intime): if intime is constant, it is turned into a pattern. else, time
 		is set to intime. if time is a constant pattern, the value is returned
 	c: the pattern to play
@@ -40,7 +54,11 @@ pplayer(pattern, time, mult): returns a player that plays a pattern in the sched
 	addf(): returns a function that should be put into the priority queue 
 		through add or addf etc.
 
-stepseq(inseq, time, mul): plays inseq as a step sequencer, but obviously it can be modified because it's a walker pattern over inseq. inseq should be an array of arrays of arrays, with the outer array holding the steps. Each step is an array of function calls to use in comp.callall, which are themselves arrays. "lanes" refer to indices within each step with the same key.
+stepseq(inseq, time, mul): plays inseq as a step sequencer, but obviously it can
+be modified because it's a walker pattern over inseq. inseq should be an array
+of arrays of arrays, with the outer array holding the steps. Each step is an
+array of function calls to use in comp.callall, which are themselves arrays.
+"lanes" refer to indices within each step with the same key.
 	walker: the pattern walking over inseq.
 	player: the pplayer for playing the pattern
 	set(step, lane, value): set a value at a certain lane and step
@@ -52,15 +70,18 @@ stepseq(inseq, time, mul): plays inseq as a step sequencer, but obviously it can
 		sequencer will start at.
 
 
-line(f, tincr, value): line plays a linear sequence of numbers separated in time by a constant value. value sets the initial value of the line. (0 default)
+line(f, tincr, value): line plays a linear sequence of numbers separated in time
+by a constant value. value sets the initial value of the line. (0 default)
 	player: the pplayer used by line.
-	set(value): set the value of the line (stop it if running). also returns the 
+	set(value): set the value of the line (stop it if running). also returns the
+
 		value
 	jump: jump to a value and output it (with route pattern)
 	setf(infunc): infunc is either a table in the form {{array arg arg etc.} 
 		position}, see compat.route for reference. (line uses route internally).
 		infunc is set the f argument initially
-	time(incr): set the time for the time difference between values (defaults to 
+	time(incr): set the time for the time difference between values (defaults to
+
 		10, or set by tincr in args
 	addf(goto, time): returns function to add to the scheduler (to use in add).
 		Goes to goto in time amount of milliseconds

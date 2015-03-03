@@ -1,12 +1,28 @@
 General usage: Writing score files for Score
 (scoreobj is what is returned from Score.new())
 
-The interface to Score should be able to load code into a place called loadENV. The user loads code into this, and functions are run in order to produce events in time.
+The interface to Score should be able to load code into a place called loadENV.
+The user loads code into this, and functions are run in order to produce events
+in time.
 
-to start a score function from the "top" level environment where code is loaded, call scoreobj:startfrom(f, time, bool, ...). f is the function, time is the time to wait before starting, and bool is whether the measure and beat values should be reset. The varargs are passed as args to f. As convenience the scoreobj:start(time, ...) function clears all future events and calls a function called main in the loaded code. (The varargs ... are passed to main again.)
+to start a score function from the "top" level environment where code is loaded,
+call scoreobj:startfrom(f, time, bool, ...). f is the function, time is the time
+to wait before starting, and bool is whether the measure and beat values should
+be reset. The varargs are passed as args to f. As convenience the
+scoreobj:start(time, ...) function clears all future events and calls a function
+called main in the loaded code. (The varargs ... are passed to main again.)
 
-in each function called from this base envelope, any of the functions described in the rest of the documentation are available. With the exception of the functions in musenv, all functions need to be prefixed by the name of the package. E.g. to call pipe to make a pipe pattern, compat.pipe() is the actual call. Furthermore, the functions in comp.lua are documented directly in that file.
+in each function called from this base envelope, any of the functions described
+in the rest of the documentation are available. With the exception of the
+functions in musenv, all functions need to be prefixed by the name of the
+package. E.g. to call pipe to make a pipe pattern, compat.pipe() is the actual
+call. Furthermore, the functions in comp.lua are documented directly in that
+file.
 
-when add() is called, a new environment is created for the added function, and the function is scheduled in the queue (this is explained in intro.txt and Score.txt). So if the composer is thinking in terms of "parts", each "part" could potentially be a different function added with add() (or it's derivatives)
+when add() is called, a new environment is created for the added function, and
+the function is scheduled in the queue (this is explained in intro.txt and
+Score.txt). So if the composer is thinking in terms of "parts", each "part"
+could potentially be a different function added with add() (or it's derivatives)
 
-you can "require" any files that are in standard lua paths, or in a file called "lualibs" that is in the same directory as lscore.pd_lua
+you can "require" any files that are in standard lua paths, or in a file called
+"lualibs" that is in the same directory as lscore.pd_lua

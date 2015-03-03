@@ -2,42 +2,83 @@
 Lua Score Library Documentation
 
 --Overview--
-This library was originally intended for use with the Pure Data environment. The goal was to be able to load in a text file in some kind of programming language that had a delay() function written into it, so the user of such a language could write music directly in code. Because of how control flow works, it was soon apparent that an add() function would be necessary as well in order to fork functions off of the main score. In addition, for the greatest ease of programming when it comes to details while composing, semi-dynamic variables were implemented using lua's setfenv and a tree of metatables.
+This library was originally intended for use with the Pure Data environment. The
+goal was to be able to load in a text file in some kind of programming language
+that had a delay() function written into it, so the user of such a language
+could write music directly in code. Because of how control flow works, it was
+soon apparent that an add() function would be necessary as well in order to fork
+functions off of the main score. In addition, for the greatest ease of
+programming when it comes to details while composing, semi-dynamic variables
+were implemented using lua's setfenv and a tree of metatables.
 
 See individual help files for the rest of the documentation
 
 --Implementation details---
 
-There is a semi-complex system of environments here: first, Score is a basic class:
+There is a semi-complex system of environments here: first, Score is a basic
+class:
 Score
 |
 Score objects (created with Score.new())
 
-The scheduler is a heap-based priority queue. Each element stores a function, that function's environment, a coroutine that was called with the function, and the time that the element is scheduled to call back into the score. Thus, add and delay are implemented by adding the current time to the desired time to have the event occur, and adding the event to the queue.
+The scheduler is a heap-based priority queue. Each element stores a function,
+that function's environment, a coroutine that was called with the function, and
+the time that the element is scheduled to call back into the score. Thus, add
+and delay are implemented by adding the current time to the desired time to have
+the event occur, and adding the event to the queue.
 
-throughout this doc I will refer to scoreobject, which means the object that has been created by Score.new()
+throughout this doc I will refer to scoreobject, which means the object that has
+been created by Score.new()
 
-Implementations of the Score class should define a function in the creating function called scoreobject:clock_callback(time) that delays by time amount and then calls scoreobject:callback(time) with the elapsed time. This function then retrieves the next item from the queue and calls the coroutine with the correct environment.
+Implementations of the Score class should define a function in the creating
+function called scoreobject:clock_callback(time) that delays by time amount and
+then calls scoreobject:callback(time) with the elapsed time. This function then
+retrieves the next item from the queue and calls the coroutine with the correct
+environment.
 
-Score has a table inside it called ENV. this table is to hold general utility functions that may be called from inside the loaded score.
+Score has a table inside it called ENV. this table is to hold general utility
+functions that may be called from inside the loaded score.
 
 Inside created score objects there are 2 more "environment" tables:
 scoreobj.ENV for general functions, and scoreobj.loadENV.
-this loadENV is for loading code into, so using Score.lua involves loading chunks into scoreobj.loadENV, which inherits from scoreobj.ENV.
+this loadENV is for loading code into, so using Score.lua involves loading
+chunks into scoreobj.loadENV, which inherits from scoreobj.ENV.
 
-scoreobj:startfrom(f, time, bool, ...) takes a function to add to the queue with arguments ..., a time to wait to call it, and a boolean value if it should inherit the master musical environment values (which I haven't actually gotten to yet).
+scoreobj:startfrom(f, time, bool, ...) takes a function to add to the queue with
+arguments ..., a time to wait to call it, and a boolean value if it should
+inherit the master musical environment values (which I haven't actually gotten
+to yet).
 
-However, there is a convenience function called scoreobj:start(time, ...) which clears the queue and starts after time. It calls a function that has been loaded into scoreobj.loadENV called main() with arguments ...
+However, there is a convenience function called scoreobj:start(time, ...) which
+clears the queue and starts after time. It calls a function that has been loaded
+into scoreobj.loadENV called main() with arguments ...
 
 scoreobj:clear() clears loadENV of all loaded code.
 
-Now, things called from startfrom() start with a default musical environment. This environment has special reserved functions that can not be overwritten. It also has musical variables such as root, scale, etc. that can be manipulated by these functions. (see documentation). Every time a function is add()ed from the score, a new environment is forked from the calling environment, inheriting any definitions. However, whenever something is assigned in the new environment that change will be local, and the calling environment will retain it's values. Note that this only applies in the function that was added with the add() function; any function that this function calls will still have the scope where it was loaded (e.g.) scoreobj.loadENV
+Now, things called from startfrom() start with a default musical environment.
+This environment has special reserved functions that can not be overwritten. It
+also has musical variables such as root, scale, etc. that can be manipulated by
+these functions. (see documentation). Every time a function is add()ed from the
+score, a new environment is forked from the calling environment, inheriting any
+definitions. However, whenever something is assigned in the new environment that
+change will be local, and the calling environment will retain it's values. Note
+that this only applies in the function that was added with the add() function;
+any function that this function calls will still have the scope where it was
+loaded (e.g.) scoreobj.loadENV
 
-This is intended so that the code of the composition reflects musical ideas structurally in the lexically-scoped format; anything added should inherit the parents ideas, but be flexible to change. Note that if the parent's variables are changed and have not been assigned to yet by the child, the child will still inherit the values. It is only after the variables have been assigned to in the child environment (specifically, after they are not nil) that the parent's environment is no longer applicable for those variables.
+This is intended so that the code of the composition reflects musical ideas
+structurally in the lexically-scoped format; anything added should inherit the
+parents ideas, but be flexible to change. Note that if the parent's variables
+are changed and have not been assigned to yet by the child, the child will still
+inherit the values. It is only after the variables have been assigned to in the
+child environment (specifically, after they are not nil) that the parent's
+environment is no longer applicable for those variables.
 
-Here is a crude diagram of the tree structure that is visible to code loaded in loadENV and added with the add() function inside scoreobj.loadENV.main():
+Here is a crude diagram of the tree structure that is visible to code loaded in
+loadENV and added with the add() function inside scoreobj.loadENV.main():
 
-_G global environment (so user code can access global packages) note this can be pretty unsafe if you don't look at code you run
+_G global environment (so user code can access global packages) note this can be
+pretty unsafe if you don't look at code you run
 |
 Score.ENV table (in Score class)
 |
@@ -46,10 +87,14 @@ scoreobj.ENV table (in a Score object)
 scoreobj.loadENV table (user code should be loaded into here)
 |
 base musical environment, created with musenv.make() 
-it is located at scoreobj.base This is the environment that is forked from when startfrom and start are called.
+it is located at scoreobj.base This is the environment that is forked from when
+startfrom and start are called.
 |
-new environment of loadENV.main(): this was changed from loadENV when main() was called after it was inserted into the priority queue and 1 callback had occured, setting the environment with setfenv().
+new environment of loadENV.main(): this was changed from loadENV when main() was
+called after it was inserted into the priority queue and 1 callback had occured,
+setting the environment with setfenv().
 |
 environment that was added from inside main() when add() was called
 
-If one were to call add() again from inside main(), the newly added function would fork from main()
+If one were to call add() again from inside main(), the newly added function
+would fork from main()
