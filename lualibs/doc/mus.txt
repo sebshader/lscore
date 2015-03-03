@@ -1,0 +1,40 @@
+mus.lua contains various musical functions and variables:
+
+mode(i, k, table):
+k is mode, i is the step to look up in the mode, and table is the base scale table to use for lookup, defaults to a major scale (yielding Ionian, dorian, etc for various values of k)
+returns the number of half steps from the base of the mode
+
+makemode(k, table):
+makes a function to use like mode, except that it only receives the step in the mode (i in the above mode explanation) as it's argument (call like newmode(i))
+
+makescale(table):
+receives a table to make a function to use like newscale(i). this looks up the i+1th member of table and returns it
+
+fixscale(table):
+fixes a scale in-place. Flattens the array, sorts it, and bases it to start at 0
+
+m(i): return ith (0-based) member of natural minor scale
+M(i): major scale
+hm(i): harmonic minor
+mm(i): melodic minor
+
+name: this is an array for note names: items with indices 1-12 are arrays of chromatic nearest note names in c major, enharmonics have flats as the first item. example: name[4][2] is the string "ds" (d-sharp). name[1][1] is "c", there is no name[1][2].
+There are also numbers indexed by name, but only diatonic names, this time the numbers are based on 0, so name["d"] = 2
+
+note(list):
+list can be a single argument or table of arguments. receives midi key numbers and outputs names in the format : "notename""quartertone inflection""octave number"
+(rounds to the nearest 1/4 tone) example output: "df<3"
+returns single note or table of the same
+
+keynum(list, octave):
+same, except that it receives either a hz value or a key name in the above format or table of the same, returns midi key number. octave sets octave, and is sticky throughout the list
+
+hertz(list, octave):
+same, except receives midi note instead of hz and outputs hz
+
+pclass(list):
+same format, gets the pitch class of the input
+
+transpose(ref, amount):
+simply adds ref to amount, keeps ref as notes if given as notes.
+if ref is a number < 12, the result is % 12

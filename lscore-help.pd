@@ -1,0 +1,23 @@
+#N canvas 465 114 450 300 10;
+#X msg 164 25 load test.lua;
+#X msg 116 16 start;
+#X obj 146 121 print done;
+#X obj 67 175 r bd;
+#X obj 71 212 print frombd;
+#X msg 270 30 pause;
+#X msg 278 59 resume;
+#X msg 79 10 stop;
+#X msg 7 45 call paul.player.stop;
+#X msg 68 78 call test bla;
+#X obj 156 77 lscore;
+#X text 22 143 See documentation for a reference for these methods
+;
+#X connect 0 0 10 0;
+#X connect 1 0 10 0;
+#X connect 3 0 4 0;
+#X connect 5 0 10 0;
+#X connect 6 0 10 0;
+#X connect 7 0 10 0;
+#X connect 8 0 10 0;
+#X connect 9 0 10 0;
+#X connect 10 0 2 0;

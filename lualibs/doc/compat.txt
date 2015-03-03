@@ -1,0 +1,134 @@
+compat.lua reference:
+
+compat contains patterns. patterns are structures (tables) which respond to the next() method. compat.ispatt(pattern) also returns true, it checks that the returned object (referred to here as patobj) has patt field which is set to true
+
+ispatt(pattern): described above
+
+handler(input, count, nextcount): this function is for dealing with next() calls with repeats. if the input is a pattern, next() is called on it. if input is a function, the function is called. if input is a table, then if table[1] is a pattern and table[2] is a number then handler returns (input, nextcount) (2 return values). Handler stores the current countdown in table[3], and when it gets to 0 it resets and returns (input, count). If not in the form {pattern, count}, then handler returns (input, count) anyways.
+
+The following are the actual patterns: they return objects that can be called with these methods:
+
+rhydist(pos, out, rep): returns pattern which chooses out items out of pos items randomly, and if rep is true it will repeat. pos and out should be positive integers, with out < pos. pos defaults to 4
+	next(): returns the difference between the last value and the next value in
+		the sequence of randomly chosen times. The output is normalized to 0 - 1
+		(so there will be out # of evenly spaced numbers based on pos divisions
+		of 0-1)
+	count(in): sets current count, and returns it. (just returns if not in)
+	reset(): start new rhythm
+
+
+urn(size): based on pdlua's urn example, chooses size items from 1 to size with no repeats. size defaults to 12
+	reset(): reset urn
+	rem(number): removes number from remaining choices. returns true on success,
+		else returns nil
+	size(size, bool): set a new size. if not bool then already chosen members 		
+		from the last active urn will be removed
+	next(): returns non-repeating random integers between 1 and size
+
+
+walk(inargs): makes a pattern that walks in a certain way. Inargs is a table and can have arguments in the following locations:
+	[1] or "low": lower bound of the walk
+	[2] or "high": higher bound
+	[3] or mode: walk drunkenly or in a straight line
+	[4] or lmode: what to do when bounds are encountered
+	[5] or step: step size of walk
+	[6] or state: initial value of walk
+
+	members:
+	setrange(low, high): set new bounds
+	lmode(inmode): takes argument as either string or number, which is:
+		0 or "reset": jumps to opposite bound when encountered (e.g. high jumps 
+			to low) (default)
+		1 or "reflect": reflects at bounds, so if over high by 1 will end up at 
+			high - 1
+		2 or "limit": keep returning value at bounds (clip)
+		3 or "avg": jump to the middle of low and high when either is 
+			encountered
+		4 or "jump": jump to random value between low and high at either bound
+		5 or "stop": return nil when over or under the limits
+	mode(inmode): also takes string or number:
+		"drunk" or 1: implement a random walk, go in a random direction every 
+			next() by step amount
+		any other string or 0: increment the state by step amount on each call 
+			to next() (default)
+	step(step): set step
+	getset(val): if val is given, state is set and the boundary conditions are 
+		resolved. returns the current state
+	next(step): optionally set step and get next item
+
+
+walker(intable, walkargs): walks over intable with a walk pattern. (above)
+	set(index, value): if index is a table, sets the intable to index and sets
+		the range to it if not value. else sets index to value in the table.
+	add(item, pos, bool): adds an item to the array at pos, if not bool then 
+		the range changes also
+	rem(pos, bool): same, but removes.
+	next(step): gets next item in the array. note that repeats are respected, so 
+		an item of form {pattern, repeats} will repeat the pattern repeats times
+		before moving on
+	reset(): set the state to 1
+	get(i): get item at position i
+	len(): get length of the array
+	walk: where the walk pattern is
+
+
+weight(intable): make a table of weightings. for each item in intable:
+	if the index is a string, the weighting for that string will be the value of
+	it. else if the value is a table, the 1st item in the table is the item to 
+	be weighted and the second is the weighting, or 1 if not given. if not
+	either, the value is the item to be weighted and the weighting is 1
+	
+	new(item, weight): add new item to weighting with weight
+	mod(item, weight): adds weight to item
+	rem(item): removes item
+	clear(): clear entire structure
+	next(): get random item according to the weighting of the items (more weight 
+		= more likely to be chosen)
+	get(item): get weighting for item
+
+
+par(intable): keeps an array of patterns and returns a parallel array of 
+patterns on each next() call by calling next() on each of the patterns
+	set(), add(), rem(): the same as for walker pattern, except no booleans for
+		changing the range of a walk pattern (because there is none)
+	next(): as described above, each item in intable has handler called, and any 
+		repeats are repeats in the final array returned by next()
+
+
+const(thing): makes constant data into a pattern that returns that data every
+time next() is called
+	val: constant data
+	next(): return val, unless val is a function in which case returns val()
+
+
+route(inpat, mtx): route takes a pattern, and every time next() is called on route, next() is called on pattern. This is the most complicated pattern here so far. the result of the pattern is routed in the following way:
+	mtx: the routing matrix:
+		in the form of an array with members [index] = table
+		the table is in the form: {{destination, arg, arg, ...}, optindex}
+		it can also have the form {"ret", optindex} or just {"ret"}
+		if the output of c.next() contains the same index as a member in mtx, 
+		the following is done:
+			if the first item is "ret" and optindex is given, an array will be
+			returned by route.next() that contains index optindex and the value
+			of the matching index
+			if just "ret", then the output of the matching index is given as the
+			return value
+			
+			if the first item is the array, then optindex is set to 2 if absent,
+			and the output with matching index will be inserted into the array
+			at location optindex. then, if destination is a function, it is
+			called with the remaining members as arguments. if destination is an
+			array then destination[arg2] = [arg1]
+			
+			if the pattern does not return an array then the returned value is
+			put into an array at location 1.
+	c: the pattern to call
+	next(): get the next item from route
+
+pipe(inpat, f, bool, switch): calls f on output of inpat.next() each time next() is called using comp.route (f must be a table for comp.route). if bool then returns the value resulting from this call
+	c: pattern (inpat in the arguments)
+	f: the function to call on the output of next() (only 1 arg)
+	ret: boolean, whether to return or not (bool in arguments)
+	next(): do it
+	switch: arg to switch with (see comp.route inside comp.lua)
+

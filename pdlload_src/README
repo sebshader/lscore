@@ -1,0 +1,13 @@
+to make, type "make" after editing the makefile with the correct paths for lua and pd installations
+
+to install, move pdlload into the same directory as lscore.pd_lua (or another file that has "require pdlload")
+
+-- pdlload reference:
+pdlload is an extension for pdlua with the following functions:
+pdlload is a bit "hacky" also. (should there be a pdlua.h file?)
+
+pd.Class.loadfile(path): loads lua chunk using the canvas path, returns the chunk
+
+pd.Class.getcpath(): get the class path (where the class was loaded from)
+
+pd.Class.getopath(): get the current object's canvas path. (loadfile could have been directly implemented using this as well, but this is newer)

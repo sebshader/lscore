@@ -1,0 +1,39 @@
+-- lscore.pd_lua reference --
+
+The pure data interface to lscore is documented here:
+also see lscore-help.pd
+
+creation args: list of filenames relative to containing canvas, but without .lua. (the files should have .lua, the arguments shouldn't). These files contain the functions that will be run as the score. Shouldn't contain spaces
+
+methods for the inlet to lscore objects:
+(top environment refers to scoreobj.loadENV
+
+outlet outputs a bang when all functions have finished (nothing on the scheduling queue)
+
+"load infiles": infiles can be a list of atoms, which will be joined into 1 string with a single space wherever the atoms are separate. This string is the path to load a .lua file into the top environment for the score.
+
+"clear": remove everything from the top environment (deletes everything)
+
+"start time arg1 arg2 etc.": call function called main() somewhere in the top environment. start in time milliseconds with given args
+
+"pause": pause scheduler
+
+"resume": resume paused scheduler
+
+"stop": clear the scheduling queue.
+
+"add f time arg1 arg2": start playing function f in the queue after time milliseconds with args.
+
+"set index val1 val2": set global variable index to an array with {val1, val2, etc}
+
+"call f arg1 arg2": call function f with args arg1 arg2 etc. f can be inside a table in the top environment
+
+there are certain variables/functions which can also be used within the functions in the top environment:
+
+pdopath: string that contains the path of the containing canvas for the lscore that loaded the file
+
+dofiles(arglist): loads each file in arglist, relative to containing canvas. ".lua" is appended to every file in arglist
+
+print(stuff): prints things to the pd console (calls tostring() on it beforehand)
+
+pdsend(atable): sends atable to a pd receiver in the format: {receiver, selector, arg1, arg2, etc}
