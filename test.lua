@@ -28,8 +28,8 @@ end
 function main()
 	-- print to pd console
 	print("hi, in main")
-	-- make a line that prints every 250 milliseconds
-	local aline = line(print, 250)
+	-- make an exponential line that prints every 25 milliseconds
+	local aline = reline(print, 25)
 	-- add paul, have it start at step 1
 	addfnow(paul.addf(1))
 	-- add testfunc

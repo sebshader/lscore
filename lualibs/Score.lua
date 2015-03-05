@@ -204,7 +204,7 @@ function Score.ENV.pplayer(pattern, time, mult)
 			if comp.isnumber(obj.mult) then count = obj.mult
 			else count = nil end
 			repeat
-				del = obj.c.next() or time.next()				
+				del = obj.c.next() or time.next()	
 				if count then 
 					count = count - 1
 					if count <= 0 then
@@ -311,6 +311,158 @@ function Score.ENV.line(f, tincr, value)
 		inter.player.c.c.getset(value)
 		inter.player.c.c.step(diffval)
 		inter.player.mult = times + 1
+		return inter.player.addf()
+	end
+	-- stop where you are
+	inter.stop = function()
+		inter.player.stop()
+	end
+	return inter
+end
+
+-- like line, but exponential envelope
+function Score.ENV.reline(f, tincr, value)
+	tincr = tincr or 10
+	value = value or 0
+	local gotodif
+	
+	local inter = {type = "reline"}
+	inter.player = Score.ENV.pplayer(compat.route(compat.pipe(
+		compat.walk{lmode = "limit", low = 0, high = 1}, 
+			{function(val)
+				return (1 - comp.unexp(val))*gotodif + value
+			end}, 
+			true)), 
+		tincr)
+	-- set, don't output value
+	inter.set = function(v)
+		value = v or values
+		inter.player.stop()
+		return value
+	end
+	-- do output value
+	inter.jump = function(v)
+		value = v or value
+		local tab = {}
+		local router = inter.player.c.mtx[1]
+		tab[1] = router[1][1]
+		tab[2] = value
+		for i=2, #router do
+			tab[i+1] = router[1][i]
+		end
+		inter.player.stop()
+		comp.route(tab, router[2])
+	end
+	-- what to do with the value?
+	-- infunc is in the form {{array arg arg la} position}
+	-- if it is a single function the function will be called
+	-- with the value
+	inter.setf = function(infunc)
+		if type(infunc) ~= "table" then
+			--assume function with 1 arg
+			local dum = {{}}
+			dum[1][1] = infunc
+			infunc = dum
+		--use entire table as first arg
+		elseif type(infunc[1]) ~= "table" then
+			infunc = {infunc}
+		end
+		inter.player.c.mtx[1] = infunc
+	end
+	inter.setf(f)
+	-- set time grain
+	inter.time = function(incr)
+		tincr = incr or tincr
+		return tincr
+	end
+	-- the function to: add(lineobj.addf, time, bool, goto, time)
+	inter.addf = function(goto, time)
+		-- store local increment
+		if tincr ~= inter.player.time() then inter.player.time(tincr) end
+		local times = math.floor(time/tincr)
+		local diffval
+		if times ~= 0 then diffval = -1/times
+		else diffval = -1 end
+		inter.player.c.c.c.getset(1)
+		inter.player.c.c.c.step(diffval)
+		inter.player.mult = times + 1
+		gotodif = goto - value
+		return inter.player.addf()
+	end
+	-- stop where you are
+	inter.stop = function()
+		inter.player.stop()
+	end
+	return inter
+end
+
+-- like line, but exponential envelope
+function Score.ENV.eline(f, tincr, value)
+	tincr = tincr or 10
+	value = value or 0
+	local gotodif
+	
+	local inter = {type = "eline"}
+	inter.player = Score.ENV.pplayer(compat.route(compat.pipe(
+		compat.walk{lmode = "limit", low = 0, high = 1}, 
+			{function(val)
+				return comp.unexp(val)*gotodif + value
+			end}, 
+			true)), 
+		tincr)
+	-- set, don't output value
+	inter.set = function(v)
+		value = v or values
+		inter.player.stop()
+		return value
+	end
+	-- do output value
+	inter.jump = function(v)
+		value = v or value
+		local tab = {}
+		local router = inter.player.c.mtx[1]
+		tab[1] = router[1][1]
+		tab[2] = value
+		for i=2, #router do
+			tab[i+1] = router[1][i]
+		end
+		inter.player.stop()
+		comp.route(tab, router[2])
+	end
+	-- what to do with the value?
+	-- infunc is in the form {{array arg arg la} position}
+	-- if it is a single function the function will be called
+	-- with the value
+	inter.setf = function(infunc)
+		if type(infunc) ~= "table" then
+			--assume function with 1 arg
+			local dum = {{}}
+			dum[1][1] = infunc
+			infunc = dum
+		--use entire table as first arg
+		elseif type(infunc[1]) ~= "table" then
+			infunc = {infunc}
+		end
+		inter.player.c.mtx[1] = infunc
+	end
+	inter.setf(f)
+	-- set time grain
+	inter.time = function(incr)
+		tincr = incr or tincr
+		return tincr
+	end
+	-- the function to: add(lineobj.addf, time, bool, goto, time)
+	inter.addf = function(goto, time)
+		-- store local increment
+		if tincr ~= inter.player.time() then inter.player.time(tincr) end
+		local times = math.floor(time/tincr)
+		local diffval
+		if times ~= 0 then diffval = 1/times
+		else diffval = 1 end
+		inter.player.c.c.c.getset(0)
+		inter.player.c.c.c.step(diffval)
+		inter.player.mult = times + 1
+		gotodif = goto - value
 		return inter.player.addf()
 	end
 	-- stop where you are

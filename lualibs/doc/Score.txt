@@ -86,3 +86,8 @@ by a constant value. value sets the initial value of the line. (0 default)
 	addf(goto, time): returns function to add to the scheduler (to use in add).
 		Goes to goto in time amount of milliseconds
 	stop(): stop line in scheduler
+	
+reline(f, tincr, value): the interface is exactly the same, except that changes
+in values get faster over time
+
+eline(f, tincr, value): same, but values get slowers

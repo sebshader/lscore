@@ -1,10 +1,44 @@
--- general utility functions
+-- general utility functions:
+-- exponential table lookup:
+-- goes from 0 to 1, 1002 entries. 0 is scaled to be .001 in the real e^-x 
+--function
+-- should be read going from 2 to 1001 (for cubic interpolation)
+local exptab = {}
+for i=1, 1002 do
+	exptab[i] = (math.exp((i-1001)*0.00691466994893) - 0.001)/0.999
+end
 
 --clip input between low and high
 local function clip(input, low, high)
 	input = input or 0
 	return math.min(math.max(input, low), high)
 end
+
+-- reads interpolated index in array that starts at 1
+-- (cubic lagrange)
+local function lagrange(index, tab)
+	local max = #tab - 1
+	if index >= max then return tab[max]
+	elseif index <= 2 then return tab[2] end
+	local iindex = math.floor(index)
+	index = index - iindex
+	local a = tab[iindex - 1]
+	local b = tab[iindex]
+	local c = tab[iindex + 1] - b
+	local d = tab[iindex + 2]
+	return b + index*(c - 0.166666667*(1 - index)*(
+		(d - a - 3*c)*index + (d + 2*a - 3*b)))
+end
+
+-- exponentially map range 0-1 (clipped). uses lagrange interpolation
+local function unexp(input)
+	input = input * 999 + 2
+	--close enough
+	if input <= 2 then return 0 end
+	return lagrange(input, exptab)
+end
+	
+
 
 --scale a range from (0, 1) to (add, add+scale)
 local function sfrom(input, scale, add)
@@ -37,6 +71,7 @@ local function scalef(input, a, b, c, d)
 	return scalefromu(input, d, c)
 end
 
+--[[
 --random number between 2 values at a certain interval, inclusive
 -- interval defaults to 1
 local function randinter(a, b, inter)
@@ -49,6 +84,7 @@ local function randinter(a, b, inter)
 	num = math.random(num + 1)
 	return num*(inter - 1) + a
 end
+]]--
 
 --reflect value in range(low, high)
 local function reflect(val, low, high)
@@ -777,6 +813,8 @@ end
 comp = {
 	log2 = log2,
 	clip = clip,
+	lagrange = lagrange,
+	unexp = unexp,
 	sto = sto,
 	sfrom = sfrom,
 	reflect = reflect,
