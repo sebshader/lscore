@@ -3,6 +3,7 @@ require "comp"
 require "mus"
 require "musenv"
 require "compat"
+require "oscpat"
 
 --the user of Score defines clock_callback
 Score = {}
@@ -46,7 +47,14 @@ function Score:new()
 	object.curENV = nil
 	object.time = 0
 	object.ENV = {
+		-- user has full control
 		this=object,
+		addbase = function(f, time, bool, ...)
+			local dynamic = self.base.envadd(bool)
+			dynamic.fms(time)
+			local member = makepqmbr(f, time, dynamic, {...})
+			self.pqueue:insert(member)
+		end,
 		--add new coroutine function
 		add = function(f, time, bool, ...)
 		-- create dynamically scoped globals for each new coroutine
@@ -100,8 +108,18 @@ function Score:new()
 			return fdelay(f, obj.ENV.inbeats(beats), ...)
 		end,
 		--delay based in beats number of beatval
-		bdelay=function(beats, ...)
+		bdelay = function(beats, ...)
 			object.ENV.delay(object.ENV.inbeats(beats), ...)
+		end,
+		-- this makes a certain function take over the current coroutine 
+		-- the function runs until over, then the parent coroutine resumes
+		-- like add, but in "series" rather than "parallel"
+		possess = function(f, ...)
+			local res = object.pqueue[1][3]
+			object.pqueue[1][3] = f
+			setfenv(f, object.pqueue[1][4])
+			f(...)
+			object.pqueue[1][3] = res
 		end
 	}
 	--still want global vars
@@ -114,6 +132,27 @@ function Score:new()
 	return object
 end
 
+-- keeps track if predone has been entered yet
+local predone
+
+--basically interface to self.ENV.add, from the base environment
+function Score:startfrom(f, time, bool, ...)
+	-- reset predone (un-entered)
+	predone = true
+	if not self.curENV then
+		self.time = 0
+	end
+	if f then
+		local dynamic = self.base.envadd(bool)
+		dynamic.fms(time)
+		local member = makepqmbr(f, time, dynamic, {...})
+		self.curENV = member[4]
+		self.pqueue:insert(member)
+		self:clock_callback(self.pqueue[1][1])
+	else error("Score: no function")
+	end
+end
+
 function Score:start(time, ...)
 	self.pqueue:clear()
 	self:startfrom(self.loadENV.main, time, true, ...)
@@ -122,21 +161,6 @@ end
 function Score:stop()
 	self.pqueue:clear()
 	self.curENV = nil
-end
-
---basically interface to self.ENV.add, from the base environment
-function Score:startfrom(f, time, bool, ...)
-	if not self.curENV then
-		self.time = 0
-	end
-	if f then
-		local dynamic = self.base.envadd(bool)
-		local member = makepqmbr(f, time, dynamic, {...})
-		self.curENV = member[4]
-		self.pqueue:insert(member)
-		self:clock_callback(self.pqueue[1][1])
-	else error("Score: no function")
-	end
 end
 
 function Score:clear()
@@ -156,9 +180,24 @@ function Score:callback(time)
 	coroutine.resume(current[2], unpack(current[5]))
 	self.pqueue:remove()
 	if self.pqueue[1] then 
-		self:clock_callback(self.pqueue[1][1] - self.time)
 		self.curENV = self.pqueue[1][4]
+		self:clock_callback(self.pqueue[1][1] - self.time)
 	else
+		if self.loadENV.predone and predone then
+			predone = false
+			local dynamic = self.base.envadd()
+			local member = makepqmbr(self.loadENV.predone, 0, dynamic)
+			self.curENV = member[4]
+			self.pqueue:insert(member)
+			setfenv(member[3], member[4])
+			coroutine.resume(member[2])
+			self.pqueue:remove()
+			if self.pqueue[1] then
+				self.curENV = self.pqueue[1][4]
+				self:clock_callback(self.pqueue[1][1] - self.time)
+				return
+			end
+		end
 		self.curENV = nil
 		self:done()
 	end
@@ -188,7 +227,7 @@ function Score.ENV.pplayer(pattern, time, mult)
 		end
 		if time.type ==  "constpat" then return time.val end
 	end
-	obj.time(time)
+	if time then obj.time(time) end
 	obj.c = pattern
 	obj.mult = mult or 1
 	obj.stop = function() current = false end
@@ -197,6 +236,7 @@ function Score.ENV.pplayer(pattern, time, mult)
 			then current = 1
 		else current = current + 1 end
 		local mycount = current
+		
 		return function ()
 			-- check if this was the last thing added
 			if mycount ~= current then return
@@ -204,7 +244,7 @@ function Score.ENV.pplayer(pattern, time, mult)
 			if comp.isnumber(obj.mult) then count = obj.mult
 			else count = nil end
 			repeat
-				del = obj.c.next() or time.next()	
+				del = obj.c.next() or time.next()
 				if count then 
 					count = count - 1
 					if count <= 0 then
@@ -218,7 +258,6 @@ function Score.ENV.pplayer(pattern, time, mult)
 	end
 	return obj
 end
-
 
 function Score.ENV.stepseq(inseq, time, mul)
 	local obj = {type = "seq"}
@@ -246,14 +285,15 @@ function Score.ENV.stepseq(inseq, time, mul)
 	end
 	obj.destep = obj.walker.rem
 	obj.addstep = obj.walker.add
-	obj.addf = function(step)
+	obj.addf = function(step, mul)
 		if step then obj.walker.walk.getset(step) end
+		if mul then obj.player.mult = mul end
 		return obj.player.addf()
 	end
 	return obj
 end
 
--- 1st arg: {destination, index} to be used by comp.setorcall
+-- 1st arg: {destination, index} to be used by comp.route
 function Score.ENV.line(f, tincr, value)
 	tincr = tincr or 10
 	value = value or 0
@@ -472,4 +512,49 @@ function Score.ENV.eline(f, tincr, value)
 	return inter
 end
 
+function Score.ENV.oscil(f, sp, osctype, freq, pwm)
+	local inter = {type = "oscillator"}
+	freq = freq or 0
+	inter.player = Score.ENV.pplayer(compat.route(oscpat.new(osctype)))
+	inter.setf = function(infunc)
+		if type(infunc) ~= "table" then
+			--assume function with 1 arg
+			local dum = {{}}
+			dum[1][1] = infunc
+			infunc = dum
+		--use entire table as first arg
+		elseif type(infunc[1]) ~= "table" then
+			infunc = {infunc}
+		end
+		inter.player.c.mtx[1] = infunc
+	end
+	inter.setf(f)
+	inter.freq = function(infreq)
+		freq = infreq
+		inter.player.c.c.per(freq*sp)
+	end
+	inter.sp = function(insp)
+		sp = insp/1000
+		inter.player.time(insp)
+		inter.freq(freq)
+	end
+	inter.phase = function(inphase)
+		inter.player.c.c.phase = inphase
+	end
+	inter.sp(sp or 10)
+	inter.pwm = function(inpwm)
+		inter.player.c.c.pwm(inpwm)
+	end
+	if pwm then inter.pwm(pwm) end
+	inter.addf = function(length, infreq, phase)
+		if type(length) == "number" then
+			inter.player.mult = length/(sp*1000)
+		else inter.player.mult = length end
+		if infreq then inter.freq(infreq) end
+		inter.phase(phase or 0)
+		return inter.player.addf()
+	end
+	return inter
+end
+	
 return Score

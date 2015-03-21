@@ -741,12 +741,31 @@ end
 
 -- arg is a table, if arg[1] is a function then calls it with fcall
 -- else, does arg[1][arg[3]] = arg[2]
--- if switch is provided, the switchth arg is switched with the 1st arg
-local function route(intable, switch)
-	if switch then
-			local loc = intable[2]
-			intable[2] = intable[switch + 1]
-			intable[switch + 1] = loc
+-- if addarg and switch are provided, the arg is inserted
+-- in the switchth spot. switch can be an array, in which case
+-- arrays are traversed by index: for instance, a switch value of
+-- {4, 2, 3} would insert addarg into intable[4][2][3]
+-- default {2}
+local function route(intable, addarg, switch)
+	if addarg then
+		switch = switch or 2
+		if type(switch) == "number" then
+			switch = {switch}
+		end
+		local trav = intable
+		local ltable
+		local lindex
+		for i, v in ipairs(switch) do
+			-- if an index doesn't exist, create it
+			if type(trav) ~= "table" then
+				trav = {}
+				table.insert(ltable, lindex, trav)
+			end
+			ltable = trav
+			lindex = v
+			trav = ltable[lindex]
+		end
+		table.insert(ltable, lindex, addarg)
 	end
 	if isfunction(intable[1]) then
 		return fcall(intable)

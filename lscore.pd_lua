@@ -23,9 +23,10 @@ pd._clearrequirepath()
 Score.ENV.print = function(inthing) pd.post(tostring(inthing)) end
 --send to a receiver in format: {receiver, sel, arg1, arg2, etc}
 Score.ENV.pdsend = function(atable)
-	local receiver = table.remove(atable, 1)
-	local sel = table.remove(atable, 1)
-	pd.send(receiver, sel, atable)
+	local cop = comp.copytab(atable)
+	local rec = table.remove(cop, 1)
+	local sel = table.remove(cop, 1)
+	pd.send(rec, sel, cop)
 end
 
 function lscore:initialize(sel, atoms)

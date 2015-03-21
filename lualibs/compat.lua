@@ -449,14 +449,14 @@ end
 item, in which case the item is assigned to a new table in place [1][1]
 the second argument is a table of tables:
 [input] = {{destination}, optional-index}. input is the location in the 
-incoming array (so they are "parallel"
+incoming array (so they are "parallel")
 destination is a function call, without the added value in it
 to take the value from, destination can be either an array or function
 in the style of comp.route (e.g.). {table, index} to assign to an array
 
 the pattern value is placed into the 2nd member of this array, unless
-there is a 2nd optional-index value, in which case the value is placed into
-this value + 1
+there is a 2nd optional-index value, in which case the value is placed into the 
+optional-index. This can be an array, which represents an address (see comp.route)
 the special destination "ret" designates the value to be returned (if any)
 if "ret" has an index then it collects it's output in an array, else
 it just outputs a value --]]
@@ -464,7 +464,7 @@ local function makeroute(inpat, routetable)
 	local obj = {patt = true, type = "routepat"}
 	obj.mtx = routetable or {}
 	obj.c = inpat
-	obj.next = function()		
+	obj.next = function()
 		local member = obj.c.next()
 		--pd.post(tostring(member))
 		if type(member) ~= "table" then
@@ -477,13 +477,11 @@ local function makeroute(inpat, routetable)
 				if v[1] == "ret" then
 					if v[2] then
 						if not ret then ret = {} end
-						ret[v[2]] = member[i]
+						comp.route(ret, member[i], v[2])
 					else ret = member[i] end
 				else
 					local args = comp.copytab(v[1])
-					local pos = v[2] or 2
-					table.insert(args, pos, member[i])
-					comp.route(args)
+					comp.route(args, member[i], v[2])
 				end
 			end
 		end
@@ -507,8 +505,7 @@ local function makepipe(inpat, f, bool, switch)
 	obj.next = function()
 		local ret = obj.c.next()
 		local arg = comp.copytab(obj.f)
-		table.insert(arg, 2, ret)
-		ret = comp.route(arg, obj.switch)
+		ret = comp.route(arg, ret, obj.switch)
 		if obj.ret then return ret end
 	end
 	return obj

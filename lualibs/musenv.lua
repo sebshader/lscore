@@ -123,6 +123,7 @@ local function makebase(intable, parent)
 	
 	--take context forward ms amount
 	reserved.fms = function(ms)
+		if not ms then return end
 		current.beatn = current.beatn + (ms/current.beatval)
 		current.measn = current.measn + floor(current.beatn/current.mbeats)
 		current.beatn = current.beatn % current.mbeats

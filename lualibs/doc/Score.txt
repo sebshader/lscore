@@ -15,6 +15,7 @@ also:
 this.curENV gets the current environment, to which the current function may
 manually be set to in order to circumvent this issue.
 
+addbase(f, time, bool, ...): like add but in base environment.
 
 inbeats(beats): get the number of milliseconds based on the current beat value
 badd(f, beats, bool, ...): same as add but in beats
@@ -38,6 +39,12 @@ fdelay(f, deltime, ...): call f (which is a table) with comp.fcall and then
 delay by deltime
 
 bfdelay(f, beats, ...): same with beats
+
+possess(f, ...): f should be a function that can have it's environment changed, like add(). possess calls the given function with ... args and that function takes over the coroutine that calls it, which means that it will run in place of the calling function until it terminates.
+
+predone(): this is a function that should be defined by the user in loadENV.
+(top-level loaded environment). it is called after everything is finished,
+but before done() is called in the host.
 
 setg(key, value): set global (loadENV) variable key to value
 getg(key): get global key
@@ -91,3 +98,14 @@ reline(f, tincr, value): the interface is exactly the same, except that changes
 in values get faster over time
 
 eline(f, tincr, value): same, but values get slowers
+
+oscil(f, sp, osctype, freq, pwm): pattern player to wrap an oscpat.
+	player: the player that holds the oscpat
+	setf(f): set f, which is in the same format as the line family, route, etc.
+	sp(insp): set sp, which is the sampling period in ms
+	freq(infreq): set freq, the frequency
+	phase(inphase): set phase, 0-1
+	pwm(inpwm): interface to pwm() in the oscpat
+	addf(length, infreq, phase): if length is a number, then plays for that many
+		ms. else, the oscil will played until the player is stopped.
+		infreq and phase are freq and phase.

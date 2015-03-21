@@ -1,0 +1,24 @@
+oscpat is for having an oscillator pattern that functions as a low-frequency oscillator for the purpose of composition.
+
+oscpat.new(type, part, phase, pwm): returns new oscillator pattern
+	next(): (next value)
+	osctype(type): set the oscillator type. comes with the choices: "sin",
+		"saw", "tri", or "sqr" for sine, sawtooth, triangle, or square.
+		waveforms. Defaults to "sin", set by type in the args. All waveforms go
+		from -1 to 1
+	part(inpart): a single cycle corresponds to the number 1, part is the number
+		of calls to next() that should be made in order to equal 1 cycle
+	per(inper): the inverse of part, this is the number that is incremented on
+		each call to next(). mod 1 is taken to get the phase
+	pwm(inpwm): sets the pulse-width modulation. Takes a number from 0-1,
+		exclusive. The period will be modulated by a constant so that 1/2
+		of a cycle will occur by the time of pwm.
+
+map: map is an array of oscillator functions for oscpat to use. Therefore, 
+custom oscillators may be created by adding them to map. the index should
+be the string that will be passed to osctype and the value should be a
+function that responds to phases in the range from 0 to 1
+
+addrdr(array, name): convenience function to add a function to map with index
+name. This function will act as a wavetable oscillator by scaling the phase by
+the array size and reading from the array.

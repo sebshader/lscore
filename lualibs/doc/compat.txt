@@ -133,14 +133,23 @@ far. the result of the pattern is routed in the following way:
 			if just "ret", then the output of the matching index is given as the
 			return value
 			
-			if the first item is the array, then optindex is set to 2 if absent,
-			and the output with matching index will be inserted into the array
-			at location optindex. then, if destination is a function, it is
-			called with the remaining members as arguments. if destination is an
-			array then destination[arg2] = [arg1]
+			destination is either a function or table. If it is a table, then
+			destination[arg2] = arg1.
+			if destination is a function, calls destination(arg1, arg2, etc.)
+			this is achieved via comp.route()
 			
+			optindex can be either a number or an array of numbers. If a number,
+			the number is inserted into the array at the given location, so for 
+			instance if optindex were 2 then the output of the pattern at index
+			will be inserted into the 2nd index, shifting all arguments right.
+			2 is the default.
+			
+			If optindex is an array then the members are interpreted as nested
+			indices: so {4, 4, 5} will insert the output of the pattern into
+			destination-array[4][4][5]. This can be quite helpful for
+			formatting arguments.
 			if the pattern does not return an array then the returned value is
-			put into an array at location 1.
+			put into an array at index 1 by default.
 	c: the pattern to call
 	next(): get the next item from route
 

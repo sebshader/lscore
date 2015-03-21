@@ -1,23 +1,32 @@
-#N canvas 465 114 450 300 10;
-#X msg 164 25 load test.lua;
-#X msg 116 16 start;
-#X obj 146 121 print done;
-#X obj 67 175 r bd;
-#X obj 71 212 print frombd;
-#X msg 270 30 pause;
-#X msg 278 59 resume;
-#X msg 79 10 stop;
-#X msg 7 45 call paul.player.stop;
-#X msg 68 78 call test bla;
-#X obj 156 77 lscore;
-#X text 22 143 See documentation for a reference for these methods
+#N canvas 465 114 587 556 10;
+#X msg 277 8 load test.lua;
+#X msg 359 41 start;
+#X obj 87 275 r bd;
+#X obj 91 312 print frombd;
+#X msg 378 116 pause;
+#X msg 373 95 resume;
+#X msg 366 61 stop;
+#X msg -7 94 call paul.player.stop;
+#X msg 135 95 call test bla;
+#X obj 301 149 lscore;
+#X text 26 202 See documentation for a reference for these methods
 ;
-#X connect 0 0 10 0;
-#X connect 1 0 10 0;
-#X connect 3 0 4 0;
-#X connect 5 0 10 0;
-#X connect 6 0 10 0;
-#X connect 7 0 10 0;
-#X connect 8 0 10 0;
-#X connect 9 0 10 0;
-#X connect 10 0 2 0;
+#X obj 314 229 r display;
+#X obj 319 302 vsl 15 128 -1 1 0 0 empty empty empty 0 -9 0 10 -262144
+-1 -1 6350 1;
+#X obj 301 176 print realdone;
+#X text -9 76 call a specific top-level function \, periods work;
+#X text 200 7 load files;
+#X obj 208 315 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+-1 -1;
+#X connect 0 0 9 0;
+#X connect 1 0 9 0;
+#X connect 2 0 3 0;
+#X connect 2 0 16 0;
+#X connect 4 0 9 0;
+#X connect 5 0 9 0;
+#X connect 6 0 9 0;
+#X connect 7 0 9 0;
+#X connect 8 0 9 0;
+#X connect 9 0 13 0;
+#X connect 11 0 12 0;
