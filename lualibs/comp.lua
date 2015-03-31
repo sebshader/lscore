@@ -139,15 +139,14 @@ local function promise(f, args)
 	end
 end
 
---returns tr if input < random value between 0 and 1
+--returns tr if input > random value between 0 and 1
 --else returns fa
 local function odds(input, tr, fa)
 	tr = tr or true
 	fa = fa or false
-	if input < fran() then 
+	if input > math.random() then
 		return tr
-	else return fa
-	end
+	else return fa end
 end
 
 --pick a random member of a table of integer indices
@@ -560,18 +559,6 @@ local function bsearch(tbl, val, get)
 		else l = index + 1 end
 	until r < l
 	return -r - 1
-end
-
-
---returns tr if input < random value between 0 and 1
---else returns fa
-local function odds(input, tr, fa)
-	tr = tr or true
-	fa = fa or false
-	if input < fran() then 
-		return tr
-	else return fa
-	end
 end
 
 --pick a random member of a table of integer indices
