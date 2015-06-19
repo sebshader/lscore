@@ -14,9 +14,9 @@ function testfunc()
 end
 
 -- define a step sequencer that prints, every 50 ms, 100 times
-paul = stepseq({{{print, "one"}}, {{print, "blah"}},
-		{{print, "three"}},  {{print, "4"}},
-		{{print, "5"}},  {{print, "6"}}}, 50, 80)
+paul = stepseq({{"one"}, {"blah"},
+		{"three"},  {"4"},
+		{"5"},  {"6"}}, {{{print}}}, 50, 80)
 
 -- define a global function
 function test(loo)

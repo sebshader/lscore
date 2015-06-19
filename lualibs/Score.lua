@@ -259,7 +259,7 @@ function Score.ENV.pplayer(pattern, time, mult)
 	return obj
 end
 
-function Score.ENV.stepseq(inseq, time, mul)
+function Score.ENV.stepseq(inseq, mtx, time, mul)
 	local obj = {type = "seq"}
 	if not inseq then
 		inseq = {}
@@ -268,7 +268,7 @@ function Score.ENV.stepseq(inseq, time, mul)
 		end
 	end
 	obj.walker = compat.walker(inseq)
-	obj.player = Score.ENV.pplayer(compat.pipe(obj.walker, {comp.callall}), 
+	obj.player = Score.ENV.pplayer(compat.route(obj.walker, mtx), 
 		time, mul)
 	-- set a step + lane value
 	obj.set = function(step, lane, value)
@@ -282,6 +282,7 @@ function Score.ENV.stepseq(inseq, time, mul)
 		for i=1, #obj.walker.arr do
 			obj.walker.arr[i][lane] = nil
 		end
+		obj.player.c.mtx[lane] = nil
 	end
 	obj.destep = obj.walker.rem
 	obj.addstep = obj.walker.add

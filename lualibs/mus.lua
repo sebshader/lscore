@@ -1,5 +1,4 @@
 require "comp"
-require "compat"
 
 --scales
 --major
