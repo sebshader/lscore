@@ -2,9 +2,7 @@
 
 --return uniform random number between 0 and 1
 --(in order to make sure no arguments are supplied)
-local function fran()
-	return math.random()
-end
+local fran = math.random
 
 --linear distribution between 0 and 1 [0, 1)
 local function xlnear()

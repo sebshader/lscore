@@ -79,12 +79,56 @@ function Score:new()
 			object.ENV.add(f, 0, false, ...)
 		end,
 		gettime = function() return object.time end,
-		--play a note with noteoff (call beginf and endf with variable args)
-		pnotef=function(name, beginf, nendf)
+		-- creates a global function to play a note with
+		-- noteoff: call functions beginf and endf with single args
+		-- (could be tables)
+		pnotef = function(name, beginf, nendf)
 			object.loadENV[name] = function(dur, bargs, eargs)
-				beginf(unpack(bargs))
-				object.ENV.badd(nendf, dur, false, unpack(eargs))
+				beginf(bargs)
+				object.ENV.badd(nendf, dur, false, eargs)
 			end
+		end,
+		-- returns a table to play a mono synth: see documentation
+		mononoff = function(beginf, changef, endf)
+			local tab = {noteinfo = {}}
+			tab.beginf = function(args)
+				beginf(args, tab.noteinfo)
+			end
+			tab.changef = function(args)
+				changef(args, tab.noteinfo)
+			end
+			tab.endf = function(args)
+				endf(args, tab.noteinfo)
+			end
+			tab.single = function(dur, bargs, eargs)
+				beginf(bargs, tab.noteinfo)
+				object.ENV.badd(tab.endf, dur, false, eargs)
+			end
+			return tab
+		end,
+		-- return a mononoff with standard tab.noteinfo handling
+		-- (pitch + velocity are args[1] and args[2])
+		stdmono = function(beginf, changef, endf)
+			local nendf = function(args, noteinfo)
+				if noteinfo.last ~= args[1] then
+					endf(noteinfo.last, 0)
+				end
+				noteinfo.last = nil
+				endf(args[1], args[2])
+			end
+			local nbeginf = function(args, noteinfo)
+				if noteinfo.last then
+					endf(noteinfo.last, 0)
+				end
+				noteinfo.last = args[1]
+				beginf(args[1], args[2])
+			end
+			local nchangef = function(args, noteinfo)
+				changef(args[1], args[2])
+				endf(noteinfo.last, 0)
+				noteinfo.last = args[1]
+			end
+			return object.ENV.mononoff(nendf, nbeginf, nchangef)
 		end,
 		--regular delay
 		delay = function(time, ...)
@@ -236,7 +280,6 @@ function Score.ENV.pplayer(pattern, time, mult)
 			then current = 1
 		else current = current + 1 end
 		local mycount = current
-		
 		return function ()
 			-- check if this was the last thing added
 			if mycount ~= current then return

@@ -2,7 +2,9 @@ This is an interface to my Score.lua scripting library. it is for loading
 scripts to use inside the Pure Data environment and the pdlua loader. See the
 documentation inside lualibs/doc.
 
-add the folder "lscore" to your pd path.
+Apparently there is an issue with using the format folder/external to load lua
+files, so in order to get lscore to work you must put the entire contents of 
+the lscore folder, including the created pdlload.so, into pd’s path somewhere
 
 This library will only work with lua 5.1. It uses setfenv extensively.
 An extension to pdlua must be compiled, in order to access paths and load

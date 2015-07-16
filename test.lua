@@ -1,3 +1,5 @@
+-- you can "require" lua libraries
+require "randist"
 -- comment out things in this file using:
 --[[ comment in order to test how things work --]]
 function testfunc()

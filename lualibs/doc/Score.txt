@@ -30,6 +30,22 @@ is called, beginf is called with unpacked bargs, then after dur nendf is
 similarly called with unpacked eargs. this is meant to play notes with noteon
 and noteoff
 
+mononoff(beginf, changef, endf) returns a table with functions.
+you pass beginf, changef, and endf in, which are hypothetically functions to
+start, change, and end mono synth notes. the functions should be in the form
+function(1arg, noteinfo). noteinfo is a persistent table you can use to store
+current information. the returned table will have functions with the names
+beginf, changef, and endf. These don't need to be called with noteinfo (it is 
+automatically passed in as the 2nd arg). There is also a function
+single(dur, bargs, eargs) which just calls pnotef with beginf and endf.
+
+stdmono(beginf, changef, endf) creates commonly used mononoff
+with mononoff, the passed in functions should take 2 arguments. the first of
+these is pitch. whenever beginf, changef, and endf are called, endf is called in
+order to free the last note held with second arg 0. 
+when calling the functions, still pass the args in a table: 
+table.beginf{pitch, velocity}
+
 delay(time, ...): delay current environment by time milliseconds. The varargs
 are for passing back to the queue for possible manipulation
 
