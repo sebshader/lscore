@@ -109,9 +109,8 @@ local function makebase(intable, parent)
 		if measures or beats then
 			measures = measures or current.measn
 			beats = beats or 0
-			local remain = measures % current.mbeats
 			current.measn = floor(measures)
-			current.beatn = beats+remain % current.mbeats
+			current.beatn = beats % current.mbeats
 		end
 		return current.measn, current.beatn
 	end

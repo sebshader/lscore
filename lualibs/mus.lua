@@ -1,14 +1,15 @@
 require "comp"
+require "compat"
 
 --scales
 --major
-local Mscale = {0, 2, 4, 5, 7, 9, 11}
+local Mscale = {0, 2, 4, 5, 7, 9, 11, 12}
 
 --harmonic minor
-local hmscale = {0, 2, 3, 5, 7, 8, 11}
+local hmscale = {0, 2, 3, 5, 7, 8, 11, 12}
 
 --melodic minor
-local mmscale = {0, 2, 3, 5, 7, 9, 10}
+local mmscale = {0, 2, 3, 5, 7, 9, 10, 12}
 
 --k is mode:
 -- 0 is Ionian, then dorian, phrygian, etc.
@@ -16,9 +17,11 @@ local mmscale = {0, 2, 3, 5, 7, 9, 10}
 local function mode(i, k, table)
 	table = table or Mscale
 	k = k or 0
-	k = math.floor(k) % 7
-	i = math.floor(i)
-	return (table[((i + k) % 7) + 1] - table[k + 1]) % 12
+	local size = table[#table]
+	k = math.floor(k) % size
+	i = math.floor(i+0.5)
+	return ((table[((i + k) % (#table - 1)) + 1] - table[k + 1]) % size)
+		+ math.floor(i/(#table-1))*size
 end
 
 --makes a function to output a certain scale.
@@ -31,7 +34,8 @@ end
 --make general scales
 local function makescale(table)
 	return function(i)
-		return(table[math.floor(i % #table) + 1])
+		return(table[math.floor(i % (#table - 1)) + 1])+ 
+			math.floor(i/(#table-1))*table[#table]
 	end
 end
 
