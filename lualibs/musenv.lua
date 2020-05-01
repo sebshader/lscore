@@ -36,8 +36,8 @@ local function makebase(intable, parent)
 	setmetatable(obj, obj)
 	
 	-- chromatic by default
-	resenv.scale = intable.f or intable[1] or function(i) return i % 12 end
-	resenv.root = intable.root or intable[2]
+	resenv.scale = intable.f or intable[1] or function(i) return i end
+	resenv.root = intable.root or intable[2] or 0
 	resenv.octave = floor(intable.octave or intable[3] or 4)
 	resenv.octavec = 12*(resenv.octave + 1)
 	resenv.tempo = intable.tempo or intable[4]
