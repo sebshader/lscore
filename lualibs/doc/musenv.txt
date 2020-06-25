@@ -5,7 +5,7 @@ musenv.make() creates a base envelope, additional environments are added to this
 base environment by calling the envadd() method on this base environment.
 This returns the new environment, which can itself be "forked" from by calling
 environmentobj:envadd(). if the argument is true for both of these, then the
-beat and measure counters are reset for the new envelope.
+beat and measure counters are reset for the new environment.
 When these environments are set as the environment for a function, the following
 methods can be accessed without calling them in the table
 

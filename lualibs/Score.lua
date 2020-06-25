@@ -79,14 +79,18 @@ function Score:new()
 			object.ENV.add(f, 0, false, ...)
 		end,
 		gettime = function() return object.time end,
-		-- creates a global function to play a note with
-		-- noteoff: call functions beginf and endf with single args
+		-- creates an object to play a note with
+		-- call functions beginf and endf with single args
 		-- (could be tables)
-		pnotef = function(name, beginf, nendf)
-			object.loadENV[name] = function(dur, bargs, eargs)
+		pnotef = function(beginf, endf, prelease, attack)
+			local obj = {prelease = prelease or 0, attack = attack or 0}
+			obj.play = function(dur, bargs, eargs)
 				beginf(bargs)
-				object.ENV.badd(nendf, dur, false, eargs)
+				object.ENV.add(endf, 
+					math.max(dur*object.curENV.bv() - obj.prelease, obj.attack),
+					false, eargs)
 			end
+			return obj
 		end,
 		-- returns a table to play a mono synth: see documentation
 		mononoff = function(beginf, changef, endf)
@@ -110,25 +114,21 @@ function Score:new()
 		-- (pitch + velocity are args[1] and args[2])
 		stdmono = function(beginf, changef, endf)
 			local nendf = function(args, noteinfo)
-				if noteinfo.last ~= args[1] then
-					endf(noteinfo.last, 0)
-				end
+				endf(args[1], args[2], noteinfo)
 				noteinfo.last = nil
-				endf(args[1], args[2])
 			end
 			local nbeginf = function(args, noteinfo)
 				if noteinfo.last then
-					endf(noteinfo.last, 0)
+					endf(noteinfo.last, 0, noteinfo)
 				end
+				beginf(args[1], args[2], noteinfo)
 				noteinfo.last = args[1]
-				beginf(args[1], args[2])
 			end
 			local nchangef = function(args, noteinfo)
-				changef(args[1], args[2])
-				endf(noteinfo.last, 0)
+				changef(args[1], args[2], noteinfo)
 				noteinfo.last = args[1]
 			end
-			return object.ENV.mononoff(nendf, nbeginf, nchangef)
+			return object.ENV.mononoff(nbeginf nchangef, nendf)
 		end,
 		--regular delay
 		delay = function(time, ...)

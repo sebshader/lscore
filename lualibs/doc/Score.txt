@@ -24,11 +24,16 @@ addfnow(f, ...) add now with no time and no resetting of measure values
 
 gettime() get the current time according to the score object
 
-pnotef(name, beginf, nendf) makes a "global" function with name "name" and
-arguments dur, bargs, eargs where dur is a number of beats. when this function
-is called, beginf is called with unpacked bargs, then after dur nendf is
-similarly called with unpacked eargs. this is meant to play notes with noteon
-and noteoff
+pnotef(beginf, endf, prelease, attack) makes an object with numeric members
+prerelease, attack, and function play(dur, bargs, eargs). beginf and endf are
+functions that take 1 argument:
+play will simply call beginf with bargs, and schedule endf for later at a time
+dur (in beats) - prelease (in ms), with attack (in ms) being the minimum delay
+time, called with argument eargs.
+This is for calling note-ons and scheduling note-offs for some specified time
+before a note is supposed to have faded out a certain amount (dur). In this way,
+notes can be easily scheduled on a grid and still fade out before the next note
+on the grid when an adsr envelope is used, for instance.
 
 mononoff(beginf, changef, endf) returns a table with functions.
 you pass beginf, changef, and endf in, which are hypothetically functions to
@@ -111,9 +116,9 @@ by a constant value. value sets the initial value of the line. (0 default)
 	stop(): stop line in scheduler
 	
 reline(f, tincr, value): the interface is exactly the same, except that changes
-in values get faster over time
+in values get faster over time (exponential line)
 
-eline(f, tincr, value): same, but values get slowers
+eline(f, tincr, value): same, but values get slower
 
 oscil(f, sp, osctype, freq, pwm): pattern player to wrap an oscpat.
 	player: the player that holds the oscpat
