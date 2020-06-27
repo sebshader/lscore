@@ -82,14 +82,15 @@ function Score:new()
 		-- creates an object to play a note with
 		-- call functions beginf and endf with single args
 		-- (could be tables)
-		pnotef = function(beginf, endf, prelease, attack)
-			local obj = {prelease = prelease or 0, attack = attack or 0}
+		pnotef = function(beginf, endf, prelease, dur, attack)
+			local obj = {prelease = prelease or 0, attack = attack or 0,
+				dur = dur or 1}
 			obj.play = function(bargs, eargs, dur)
-				dur = dur or 0
+				dur = dur or obj.dur
 				beginf(bargs)
-				object.ENV.add(endf, 
+				object.ENV.add(endf,
 					math.max(dur*object.curENV.bv() - obj.prelease, obj.attack),
-					false, eargs)
+					false, eargs or bargs)
 			end
 			return obj
 		end,
@@ -146,11 +147,11 @@ function Score:new()
 		--(f is an array for fcall)
 		fdelay = function(f, deltime, ...)
 			local res = comp.fcall(f)
-			obj.ENV.delay(deltime, ...)
+			object.ENV.delay(deltime, ...)
 			return res
 		end,
 		bfdelay = function(f, beats, ...)
-			return fdelay(f, obj.ENV.inbeats(beats), ...)
+			return object.ENV.fdelay(f, object.ENV.inbeats(beats), ...)
 		end,
 		--delay based in beats number of beatval
 		bdelay = function(beats, ...)
