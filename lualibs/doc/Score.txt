@@ -25,11 +25,11 @@ addfnow(f, ...) add now with no time and no resetting of measure values
 gettime() get the current time according to the score object
 
 pnotef(beginf, endf, prelease, attack) makes an object with numeric members
-prerelease, attack, and function play(dur, bargs, eargs). beginf and endf are
+prerelease, attack, and function play(bargs, eargs, dur). beginf and endf are
 functions that take 1 argument:
 play will simply call beginf with bargs, and schedule endf for later at a time
 dur (in beats) - prelease (in ms), with attack (in ms) being the minimum delay
-time, called with argument eargs.
+time, called with argument eargs. dur defaults to 0.
 This is for calling note-ons and scheduling note-offs for some specified time
 before a note is supposed to have faded out a certain amount (dur). In this way,
 notes can be easily scheduled on a grid and still fade out before the next note

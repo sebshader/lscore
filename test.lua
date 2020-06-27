@@ -5,7 +5,7 @@ require "randist"
 function testfunc()
 	-- delay by 1/2 beat
 	bdelay(.5)
-	bv(1500) -- set beat value for this environment (2000 ms)
+	bv(1500) -- set beat value for this environment (1500 ms)
 	-- do the following 3 times:
 	for i=1, 3 do
 		-- send to "bd" receiver with "list" selector

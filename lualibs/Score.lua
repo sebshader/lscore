@@ -84,7 +84,8 @@ function Score:new()
 		-- (could be tables)
 		pnotef = function(beginf, endf, prelease, attack)
 			local obj = {prelease = prelease or 0, attack = attack or 0}
-			obj.play = function(dur, bargs, eargs)
+			obj.play = function(bargs, eargs, dur)
+				dur = dur or 0
 				beginf(bargs)
 				object.ENV.add(endf, 
 					math.max(dur*object.curENV.bv() - obj.prelease, obj.attack),
@@ -128,7 +129,7 @@ function Score:new()
 				changef(args[1], args[2], noteinfo)
 				noteinfo.last = args[1]
 			end
-			return object.ENV.mononoff(nbeginf nchangef, nendf)
+			return object.ENV.mononoff(nbeginf, nchangef, nendf)
 		end,
 		--regular delay
 		delay = function(time, ...)
