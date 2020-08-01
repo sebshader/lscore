@@ -5,6 +5,63 @@ require "musenv"
 require "compat"
 require "oscpat"
 
+-- untested - from
+--https://github.com/pkulchenko/MobDebug/blob/master/src/mobdebug.lua#L65-L81
+if not setfenv then -- Lua 5.2+
+  -- based on http://lua-users.org/lists/lua-l/2010-06/msg00314.html
+  -- this assumes f is a function
+  local function findenv(f)
+    local level = 1
+    repeat
+      local name, value = debug.getupvalue(f, level)
+      if name == '_ENV' then return level, value end
+      level = level + 1
+    until name == nil
+    return nil end
+  getfenv = function (f) return(select(2, findenv(f)) or _G) end
+  setfenv = function (f, t)
+    local level = findenv(f)
+    if level then debug.setupvalue(f, level, t) end
+    return f end
+end
+
+--alternative, also untested - from
+--https://leafo.net/guides/setfenv-in-lua52-and-above.html
+--[[
+function setfenv(fn, env)
+  local i = 1
+  while true do
+    local name = debug.getupvalue(fn, i)
+    if name == "_ENV" then
+      debug.upvaluejoin(fn, i, (function()
+        return env
+      end), 1)
+      break
+    elseif not name then
+      break
+    end
+
+    i = i + 1
+  end
+
+  return fn
+end
+
+function getfenv(fn)
+  local i = 1
+  while true do
+    local name, val = debug.getupvalue(fn, i)
+    if name == "_ENV" then
+      return val
+    elseif not name then
+      break
+    end
+    i = i + 1
+  end
+end
+]]
+
+
 --the user of Score defines clock_callback
 Score = {}
 Score.clock_callback=function(self, time)
