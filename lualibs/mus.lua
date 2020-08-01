@@ -238,8 +238,6 @@ local function transpose(ref, amount)
 	end
 end
 
-
-
 --loadscala takes a string and
 --parses it into a scale table (array) of semitones
 --local function loadscala(instring)

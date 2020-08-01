@@ -95,9 +95,11 @@ local function makebase(intable, parent)
 	end
 	
 	-- set number of beats in a measure (need not be an integer)
-	reserved.setmb = function(beats)
+	reserved.setmb = function(beats, reset)
 		if beats and beats > 0 then
-			if current.mbeats > beats then
+			if current.mbeats > beats and reset then
+				current.beatn = 0
+			else
 				current.beatn = current.beatn % current.mbeats
 			end
 			current.mbeats = beats
@@ -122,10 +124,13 @@ local function makebase(intable, parent)
 	
 	--take context forward ms amount
 	reserved.fms = function(ms)
-		if not ms then return end
-		current.beatn = current.beatn + (ms/current.beatval)
-		current.measn = current.measn + floor(current.beatn/current.mbeats)
-		current.beatn = current.beatn % current.mbeats
+		if not ms then 
+			error("fms: no ms specified")
+			return
+		end
+		local beat = current.beatn + (ms/current.beatval)
+		current.measn = current.measn + floor(beat/current.mbeats)
+		current.beatn = beat % current.mbeats
 	end
 	
 	--get note # in current environment

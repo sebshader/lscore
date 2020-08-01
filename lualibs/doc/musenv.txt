@@ -23,8 +23,7 @@ called scale. This function is meant to receive indices in and output semitones
 
 seto(octave) : set current octave, and a private variable called octavec
 
-setmb(beats) : set # of beats in a measure. Doesn't necessarily have to be an
-integer.
+setmb(beats, reset) : set # of beats in a measure. Doesn't necessarily have to be an integer. If reset is true then if the current beat # in the measure is > the new number of beats per measure, it will be set to 0. Otherwise, the current beat # is the old beat # % new beats per measure
 
 loc(measures, beats) : sets measures and beats, if provided. Also returns them
 

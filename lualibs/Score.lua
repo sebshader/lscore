@@ -155,7 +155,7 @@ function Score:new()
 		end,
 		--delay based in beats number of beatval
 		bdelay = function(beats, ...)
-			object.ENV.delay(object.ENV.inbeats(beats), ...)
+			return object.ENV.delay(object.ENV.inbeats(beats), ...)
 		end,
 		-- this makes a certain function take over the current coroutine 
 		-- the function runs until over, then the parent coroutine resumes
