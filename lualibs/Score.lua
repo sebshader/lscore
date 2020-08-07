@@ -246,6 +246,7 @@ function Score:startfrom(f, time, bool, ...)
 		self.time = 0
 	end
 	if f then
+		time = time or 0
 		local dynamic = self.base.envadd(bool)
 		dynamic.fms(time)
 		local member = makepqmbr(f, time, dynamic, {...})
