@@ -11,19 +11,19 @@ local function makebase(intable, parent)
 	-- top dataspace. Each new env inherits from creating dataspace
 	local resenv = {}
 	-- top env
-	local top = {}
-	resenv.__index = resenv
+	--local top = {}
+	--resenv.__index = resenv
 	-- top user interface. user interface also inherits from the creating
 	-- one
 	local obj = {}
 	local current
 	
-	--set top's metatable
+	--set resenv's parent
 	obj.meta = parent
 
 	obj.envadd = function(bool)
 		current = resenv
-		return reserved.envadd(top, bool)
+		return reserved.envadd(bool)
 	end
 	obj.type = "environment"
 	obj.__index = function(table, key)
@@ -34,6 +34,7 @@ local function makebase(intable, parent)
 	end
 	obj.__newindex = {}
 	setmetatable(obj, obj)
+	setmetatable(resenv, obj.meta)
 	
 	-- chromatic by default
 	resenv.scale = intable.f or intable[1] or function(i) return i end
@@ -144,36 +145,35 @@ local function makebase(intable, parent)
 	-- if bool is true then measure/beats reset. if not then inherits from
 	-- parent environment
 	reserved.envadd = function(parent, bool)
-		local newenv = {}
+		local private = {}
 		local newobj = {}
 		if bool then
-			newenv.beatn = 0.0
-			newenv.measn = 0.0
+			newobj.beatn = 0.0
+			newobj.measn = 0.0
 		end
-		newenv.__index = newenv
-		newenv.oparent = parent
-		newenv.parent = current
-		setmetatable(newenv, current)
-		setmetatable(newobj, newobj) 
+		--newenv.__index = newenv
+		--newobj.oparent = parent
+		newobj.parent = parent or current
+		--setmetatable(newenv, current)
+		setmetatable(newobj, private) 
 		
-		newobj.__index = function(table, key)
-			current = newenv
+		private.__index = function(table, key)
+			current = newobj
 			if reserved[key] then
 				return reserved[key]
 			else
 				local v
-				local lenv = newenv
 				repeat
 					v = rawget(table, key)
          			if v ~= nil then return v end
-         			table = lenv.oparent
-         			lenv = lenv.parent
-				until table == top
-				return obj.meta[key]
+         			--table = lenv.oparent
+         			table = table.parent
+				until table == resenv
+				return resenv[key]
 			end
 		end
-		newobj.__newindex = function(table, key, value)
-			current = newenv
+		private.__newindex = function(table, key, value)
+			current = newobj
 			if reserved[key] then
 				return
 			else rawset(table, key, value) end
