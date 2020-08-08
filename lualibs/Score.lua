@@ -115,11 +115,10 @@ function Score:new()
 		--add new coroutine function
 		add = function(f, time, bool, ...)
 		-- create dynamically scoped globals for each new coroutine
-			local dynamic
-			if object.curENV then
-				dynamic = object.curENV:envadd(bool)
-				dynamic.fms(time)
-			else return end
+			if not object.curENV then return end
+			
+			local dynamic = object.curENV:envadd(nil, bool)
+			dynamic.fms(time)
 			object.pqueue:insert(makepqmbr(
 				f, time + object.time, dynamic,
 					{...}))
@@ -219,10 +218,12 @@ function Score:new()
 		-- like add, but in "series" rather than "parallel"
 		possess = function(f, ...)
 			local res = object.pqueue[1][3]
+			local ret
 			object.pqueue[1][3] = f
 			setfenv(f, object.pqueue[1][4])
-			f(...)
+			ret = f(...)
 			object.pqueue[1][3] = res
+			return ret
 		end
 	}
 	--still want global vars
@@ -236,12 +237,12 @@ function Score:new()
 end
 
 -- keeps track if predone has been entered yet
-local predone
+-- local predone - moved to Scoreobj.predone
 
 --basically interface to self.ENV.add, from the base environment
 function Score:startfrom(f, time, bool, ...)
 	-- reset predone (un-entered)
-	predone = true
+	self.arepredone = true
 	if not self.curENV then
 		self.time = 0
 	end
@@ -252,7 +253,9 @@ function Score:startfrom(f, time, bool, ...)
 		local member = makepqmbr(f, time, dynamic, {...})
 		self.curENV = member[4]
 		self.pqueue:insert(member)
-		self:clock_callback(self.pqueue[1][1])
+		-- on the chance it isn't cue based, try for tail
+		-- call
+		return self:clock_callback(self.pqueue[1][1])
 	else error("Score: no function")
 	end
 end
@@ -282,29 +285,39 @@ function Score:callback(time)
 	-- set env to the right function
 	setfenv(current[3], current[4])
 	coroutine.resume(current[2], unpack(current[5]))
+	if(coroutine.status(current[2]) == "dead") then
+		current[4].parent.deleteleaf(current[4])
+	end
 	self.pqueue:remove()
 	if self.pqueue[1] then 
 		self.curENV = self.pqueue[1][4]
-		self:clock_callback(self.pqueue[1][1] - self.time)
+		-- tail call hopefully? (must be in form "return f()" I guess)
+		return self:clock_callback(self.pqueue[1][1] - self.time)
 	else
-		if self.loadENV.predone and predone then
-			predone = false
-			local dynamic = self.base.envadd()
-			local member = makepqmbr(self.loadENV.predone, 0, dynamic)
-			self.curENV = member[4]
-			self.pqueue:insert(member)
-			setfenv(member[3], member[4])
-			coroutine.resume(member[2])
-			self.pqueue:remove()
-			if self.pqueue[1] then
-				self.curENV = self.pqueue[1][4]
-				self:clock_callback(self.pqueue[1][1] - self.time)
-				return
-			end
-		end
-		self.curENV = nil
-		self:done()
+		return self:predone()
 	end
+end
+
+function Score:predone()
+	if self.loadENV.predone and self.arepredone then
+		self.arepredone = false
+		local dynamic = self.base.envadd()
+		local current = makepqmbr(self.loadENV.predone, 0, dynamic)
+		self.curENV = current[4]
+		self.pqueue:insert(current)
+		setfenv(current[3], current[4])
+		coroutine.resume(current[2])
+		if(coroutine.status(current[2]) == "dead") then
+			current[4].parent.deleteleaf(current[4])
+		end
+		self.pqueue:remove()
+		if self.pqueue[1] then
+			self.curENV = self.pqueue[1][4]
+			return self:clock_callback(self.pqueue[1][1] - self.time)
+		end
+	end
+	self.curENV = nil
+	return self:done()
 end
 
 -- an object to play a pattern in the scheduler.

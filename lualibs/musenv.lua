@@ -23,7 +23,7 @@ local function makebase(intable, parent)
 
 	obj.envadd = function(bool)
 		current = resenv
-		return reserved.envadd(bool)
+		return reserved.envadd(nil, bool)
 	end
 	obj.type = "environment"
 	obj.__index = function(table, key)
@@ -36,6 +36,11 @@ local function makebase(intable, parent)
 	setmetatable(obj, obj)
 	setmetatable(resenv, obj.meta)
 	
+	-- should typically only have base environment
+	resenv.leaves = {}
+	resenv.deleteleaf = function(leaf)
+		resenv.leaves[leaf] = nil
+	end
 	-- chromatic by default
 	resenv.scale = intable.f or intable[1] or function(i) return i end
 	resenv.root = intable.root or intable[2] or 0
@@ -154,6 +159,13 @@ local function makebase(intable, parent)
 		--newenv.__index = newenv
 		--newobj.oparent = parent
 		newobj.parent = parent or current
+		newobj.parent.leaves[newobj] = newobj
+		newobj.leaves = {}
+		
+		newobj.deleteleaf = function(leaf)
+			newobj.leaves[leaf] = nil
+		end
+		
 		--setmetatable(newenv, current)
 		setmetatable(newobj, private) 
 		

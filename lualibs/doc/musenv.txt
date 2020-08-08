@@ -44,6 +44,9 @@ milliseconds. this is done automatically inside the builtin delay function
 penv(i, octave, add) : returns octavec + root + scale(i) + add.
 add defaults to 0, octave sets octave and octavec for the environment.
 
-envadd(parent, bool) : split a new environment from parent, inheriting all of
-parent's variables, both private variables(the ones described above) and user
-variables.
+envadd(bool, parent) : split a new environment from the current one, inheriting all of parent's variables, both private variables(the ones described above) and user variables. defaults to current if parent isn't present
+
+parent: holds parent environment table
+leaves: holds leaf (child) environmnent tables, indexed by the tables
+	(this is mainly to keep track of inhereted variables)
+deleteleaf(leaf): delete child environment from parent's reference
