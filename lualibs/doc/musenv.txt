@@ -49,4 +49,4 @@ envadd(bool, parent) : split a new environment from the current one, inheriting 
 parent: holds parent environment table
 leaves: holds leaf (child) environmnent tables, indexed by the tables
 	(this is mainly to keep track of inhereted variables)
-deleteleaf(leaf): delete child environment from parent's reference
+deleteleaf(leaf): delete child environment from reference

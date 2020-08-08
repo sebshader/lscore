@@ -69,8 +69,8 @@ local function makebase(intable, parent)
 	--set/get beatval
 	reserved.bv = function(bv)
 		if bv and bv > 0 then
-			current.beatval = bv
-			current.tempo = 60000/bv
+			rawset(current, "beatval", bv)
+			rawset(current, "tempo", 60000/bv)
 		end
 		return current.beatval
 	end
@@ -78,37 +78,37 @@ local function makebase(intable, parent)
 	--set/get tempo
 	reserved.temp = function(temp)
 		if temp and temp > 0 then
-			current.tempo = temp
-			current.beatval = 60000/temp
+			rawset(current, "tempo", temp)
+			rawset(current, "beatval", 60000/temp)
 		end
 		return current.tempo
 	end
 	
 	reserved.setrt = function(i)
 		i = i or 0
-		current.root = i % 12
+		rawset(current, "root", i % 12)
 	end
 	
 	-- set scale
 	reserved.setsc = function(func)
-		if func then current.scale = func end
+		if func then rawset(current, "scale", func) end
 	end
 	
 	-- set octave
 	reserved.seto = function(ino)
-		current.octave = ino
-		current.octavec = 12*(ino + 1)
+		rawset(current, "octave", ino)
+		rawset(current, "octavec", 12*(ino + 1))
 	end
 	
 	-- set number of beats in a measure (need not be an integer)
 	reserved.setmb = function(beats, reset)
 		if beats and beats > 0 then
 			if current.mbeats > beats and reset then
-				current.beatn = 0
+				rawset(current, "beatn", 0)
 			else
-				current.beatn = current.beatn % current.mbeats
+				rawset(current, "beatn", current.beatn % current.mbeats)
 			end
-			current.mbeats = beats
+			rawset(current, "mbeats", beats)
 		end
 	end
 	
@@ -117,8 +117,8 @@ local function makebase(intable, parent)
 		if measures or beats then
 			measures = measures or current.measn
 			beats = beats or 0
-			current.measn = floor(measures)
-			current.beatn = beats % current.mbeats
+			rawset(current, "measn", floor(measures))
+			rawset(current, "beatn", beats % current.mbeats)
 		end
 		return current.measn, current.beatn
 	end
@@ -135,8 +135,8 @@ local function makebase(intable, parent)
 			return
 		end
 		local beat = current.beatn + (ms/current.beatval)
-		current.measn = current.measn + floor(beat/current.mbeats)
-		current.beatn = beat % current.mbeats
+		rawset(current, "measn", current.measn + floor(beat/current.mbeats))
+		rawset(current, "beatn", beat % current.mbeats)
 	end
 	
 	--get note # in current environment
@@ -186,7 +186,7 @@ local function makebase(intable, parent)
 		end
 		private.__newindex = function(table, key, value)
 			current = newobj
-			if reserved[key] then
+			if reserved[key] or resenv[key] then
 				return
 			else rawset(table, key, value) end
 		end
