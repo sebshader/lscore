@@ -5,7 +5,8 @@ documentation inside lualibs/doc.
 put the the created pdlload.so in the top of the lscore directory, which should
 be put into pd’s path somewhere
 
-This library will only work with lua 5.1. It uses setfenv extensively.
+This library is mainly tested with lua 5.1. It uses setfenv extensively. Some 
+experimental 'polyfills' have been provided for lua > 5.1 using the debug library
 An extension to pdlua must be compiled, in order to access paths and load
 chunks. Please read the readme in pdlload. There is a darwin pdlload.so compiled
 inside darwin. At any rate, the compiled pdlload library (e.g. pdlload.so)
