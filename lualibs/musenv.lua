@@ -32,7 +32,7 @@ local function makebase(intable, parent)
 			return reserved[key]
 		end
 	end
-	obj.__newindex = {}
+	obj.__newindex = function(table, key, value) end
 	setmetatable(obj, obj)
 	setmetatable(resenv, obj.meta)
 	

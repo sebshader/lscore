@@ -68,7 +68,7 @@ static void pdlua_setrequirepath
     lua_pushstring(L, path);
     if (lua_pcall(L, 1, 0, 0) != 0)
     {
-        error("lua: internal error in `pd._setrequirepath': %s", lua_tostring(L, -1));
+        pd_error(NULL, "lua: internal error in `pd._setrequirepath': %s", lua_tostring(L, -1));
         lua_pop(L, 1);
     }
     lua_pop(L, 1);
@@ -90,7 +90,7 @@ static void pdlua_clearrequirepath
     lua_gettable(L, -2);
     if (lua_pcall(L, 0, 0, 0) != 0)
     {
-        error("lua: internal error in `pd._clearrequirepath': %s", lua_tostring(L, -1));
+        pd_error(NULL, "lua: internal error in `pd._clearrequirepath': %s", lua_tostring(L, -1));
         lua_pop(L, 1);
     }
     lua_pop(L, 1);
@@ -185,9 +185,9 @@ static int pdlua_getopath(lua_State *L)
         	symbol = canvas_getdir(o->canvas);
         	lua_pushstring(L, symbol->s_name);
         }
-        else error("lua: error in object:getopath() - object is null");
+        else pd_error(NULL, "lua: error in object:getopath() - object is null");
     }
-    else error("lua: error in object:getopath() - object is wrong type");
+    else pd_error(NULL, "lua: error in object:getopath() - object is wrong type");
 #ifdef PDLUA_DEBUG
     post("pdlua_loadfile end. stack top is %d", lua_gettop(L));
 #endif // PDLUA_DEBUG
@@ -258,9 +258,9 @@ static int pdlua_loadfile(lua_State *L)
             }
             else pd_error(o, "lua: error loading `%s': canvas_open() failed", filename);
         }
-        else error("lua: error in object:loadfile() - object is null");
+        else pd_error(o, "lua: error in object:loadfile() - object is null");
     }
-    else error("lua: error in object:loadfile() - object is wrong type");
+    else pd_error(NULL, "lua: error in object:loadfile() - object is wrong type");
 #ifdef PDLUA_DEBUG
     post("pdlua_loadfile end. stack top is %d", lua_gettop(L));
 #endif // PDLUA_DEBUG

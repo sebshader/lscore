@@ -33,15 +33,15 @@ THE POSSIBILITY OF SUCH DAMAGE. \
 
 # path to pd
 ## change this according to your setup!
-PDROOT=/Applications/Pd-extended.app/Contents/Resources
+PDROOT=/usr/local/bin
 
 # here we find the sources of pd (and evtl. the pd.lib)
-PDSRCDIR=/Applications/Pd-extended.app/Contents/Resources/include/pdextended
-PDLIBDIR=/Applications/Pd-extended.app/Contents/Resources/bin
+PDSRCDIR=/usr/local/include/pd
+PDLIBDIR=/usr/local/bin
 
 # path to lua includes and lib
-LUASRCDIR=/usr/local/include/lua5.1
-LUALIBDIR=/usr/local/lib
+LUASRCDIR=/usr/include/luajit-2.1
+LUALIBDIR=/usr/lib/x86_64-linux-gnu/
 
 # this is the filename-extension
 # people have to specify it at the cmdline: eg "make pd_linux"
@@ -101,7 +101,7 @@ LINUXCFLAGS = -DPD -O2 -funroll-loops -fomit-frame-pointer -fPIC \
 
 LINUXLDFLAGS =  -export_dynamic -shared  -lc -lm -L$(LUALIBDIR)
 
-LINUXINCLUDE =  -I$(PDSRCDIR) -I$(LUASRCDIR) -ldns_sd
+LINUXINCLUDE =  -I$(PDSRCDIR) -I$(LUASRCDIR)
 
 %.pd_linux: %.c
 	$(CC) $(LINUXLDFLAGS) $(LINUXCFLAGS) $(LINUXINCLUDE) -o $*.so $*.c
