@@ -1,15 +1,13 @@
-require "pdlload"
-
 local lscore = pd.Class:new():register("lscore")
 
 local function settpath()
-	local path = lscore:getcpath()
+	local path = lscore._loadpath
 	if (pd._iswindows) then
-		package.path = path .. "\\lualibs\\?;" .. path .. "\\lualibs\\?.lua;" .. package.path
-		package.cpath = path .. "\\lualibs\\?.dll;" .. package.cpath
+		package.path = path .. "lualibs\\?;" .. path .. "lualibs\\?.lua;" .. package.path
+		package.cpath = path .. "lualibs\\?.dll;" .. package.cpath
 	else
-		package.path = path .. "/lualibs/?;" .. path .. "/lualibs/?.lua;" .. package.path
-		package.cpath = path .. "/lualibs/?.so;" .. package.cpath
+		package.path = path .. "lualibs/?;" .. path .. "lualibs/?.lua;" .. package.path
+		package.cpath = path .. "lualibs/?.so;" .. package.cpath
 	end
 end
 
@@ -37,11 +35,12 @@ function lscore:initialize(sel, atoms)
 	self.time = 0
 	--whether we are paused
 	self.paused = false
+    local path = self._canvaspath
 	--simple wrapper for load
 	self.score.ENV.dofiles = function(...)
 		local args = {...}
 		for i = 1, #args do
-			local chunk = self:loadfile(args[i] .. ".lua")
+			local chunk = loadfile(path .. args[i] .. ".lua")
 			setfenv(chunk, self.score.loadENV)
 			chunk()
 		end
@@ -60,13 +59,11 @@ function lscore:postinitialize()
 	end
 	function self.score:done() 
 		obj:outlet(1, "bang", {}) end
-	if (pd._iswindows) then
-		self.score.ENV.pdopath = self:getopath() .. "\\"
-	else self.score.ENV.pdopath = self:getopath() .. "/" end
+    self.score.ENV.pdopath = self._canvaspath
 end
 
 function lscore:in_1_load(atoms)
-	local chunk = self:loadfile(table.concat(atoms, " "))
+	local chunk = loadfile(self._canvaspath .. table.concat(atoms, " "))
 	setfenv(chunk, self.score.loadENV)
 	settpath()
 	chunk()
