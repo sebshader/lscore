@@ -4,8 +4,6 @@ each has an interval, and each time "next" is called on the pattern
 the interval will be incremented modulo 1 and the given (math) function
 will be evaluated, returning values from -1 to 1
 --]]
-require "comp"
-require "compat"
 
 -- sine for convenience of phase
 local function sin(phase)
@@ -42,22 +40,24 @@ local function new(osctype, part, phase, pwm)
 		type = "oscpat",
 		phase = phase or 0
 	}
+    local incrpart
+    local incrper
 	obj.part = function(inpart)
 		if inpart then
-			part = inpart
-			if part == 0 then per = 0
-			else per = 1/part end
+			incrpart = inpart
+			if incrpart == 0 then incrper = 0
+			else incrper = 1/incrpart end
 		end
-		return part
+		return incrpart
 	end
 	obj.part(part or 0)
 	obj.per = function(inper)
 		if inper then
-			per = inper
-			if per == 0 then part = 0
-			else part = 1/per end
+			incrper = inper
+			if incrper == 0 then incrpart = 0
+			else incrpart = 1/incrper end
 		end
-		return per
+		return incrper
 	end
 	local func
 	obj.osctype = function(intype)
@@ -76,15 +76,15 @@ local function new(osctype, part, phase, pwm)
 	obj.next = function()
 		local ret = func(obj.phase)
 		local modper
-		if obj.phase < 0.5 then modper = per*.5/pwm
-		else modper = per*.5/(1 - pwm) end
+		if obj.phase < 0.5 then modper = incrper*.5/pwm
+		else modper = incrper*.5/(1 - pwm) end
 		obj.phase = (obj.phase + modper) % 1
 		return ret
 	end
 	return obj
 end
 
-oscpat = {
+local oscpat = {
 	map = map,
 	addrdr = addrdr,
 	new = new

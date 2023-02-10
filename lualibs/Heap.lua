@@ -1,4 +1,4 @@
-Heap = {}
+local Heap = {}
 
 -- Heap in lua. Based on algorithms from Algorithms in C by Sedgewick
 

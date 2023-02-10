@@ -1,4 +1,4 @@
-require "mus"
+local mus = require "mus"
 local floor = math.floor
 
 --note: every child must be explicitly cleaned up
@@ -17,7 +17,7 @@ local function makebase(intable, parent)
 	-- one
 	local obj = {}
 	local current
-	
+
 	--set resenv's parent
 	obj.meta = parent
 
@@ -26,16 +26,16 @@ local function makebase(intable, parent)
 		return reserved.envadd(nil, bool)
 	end
 	obj.type = "environment"
-	obj.__index = function(table, key)
+	obj.__index = function(_, key)
 		current = resenv
 		if reserved[key] then
 			return reserved[key]
 		end
 	end
-	obj.__newindex = function(table, key, value) end
+	obj.__newindex = function(_, _, _) end
 	setmetatable(obj, obj)
 	setmetatable(resenv, obj.meta)
-	
+
 	-- should typically only have base environment
 	resenv.leaves = {}
 	resenv.deleteleaf = function(leaf)
@@ -65,7 +65,7 @@ local function makebase(intable, parent)
 			resenv.beatval = 1000
 		end
 	end
-	
+
 	--set/get beatval
 	reserved.bv = function(bv)
 		if bv and bv > 0 then
@@ -74,7 +74,7 @@ local function makebase(intable, parent)
 		end
 		return current.beatval
 	end
-	
+
 	--set/get tempo
 	reserved.temp = function(temp)
 		if temp and temp > 0 then
@@ -83,23 +83,23 @@ local function makebase(intable, parent)
 		end
 		return current.tempo
 	end
-	
+
 	reserved.setrt = function(i)
 		i = i or 0
 		rawset(current, "root", i % 12)
 	end
-	
+
 	-- set scale
 	reserved.setsc = function(func)
 		if func then rawset(current, "scale", func) end
 	end
-	
+
 	-- set octave
 	reserved.seto = function(ino)
 		rawset(current, "octave", ino)
 		rawset(current, "octavec", 12*(ino + 1))
 	end
-	
+
 	-- set number of beats in a measure (need not be an integer)
 	reserved.setmb = function(beats, reset)
 		if beats and beats > 0 then
@@ -111,7 +111,7 @@ local function makebase(intable, parent)
 			rawset(current, "mbeats", beats)
 		end
 	end
-	
+
 	-- set timestamp
 	reserved.loc = function(measures, beats)
 		if measures or beats then
@@ -122,15 +122,15 @@ local function makebase(intable, parent)
 		end
 		return current.measn, current.beatn
 	end
-	
+
 	--general get function
 	reserved.get = function(key)
 		return current[key]
 	end
-	
+
 	--take context forward ms amount
 	reserved.fms = function(ms)
-		if not ms then 
+		if not ms then
 			error("fms: no ms specified")
 			return
 		end
@@ -138,7 +138,7 @@ local function makebase(intable, parent)
 		rawset(current, "measn", current.measn + floor(beat/current.mbeats))
 		rawset(current, "beatn", beat % current.mbeats)
 	end
-	
+
 	--get note # in current environment
 	reserved.penv = function(i, ioctave, add)
 		add = add or 0
@@ -149,7 +149,7 @@ local function makebase(intable, parent)
 	-- add new child environment with the same vars,
 	-- if bool is true then measure/beats reset. if not then inherits from
 	-- parent environment
-	reserved.envadd = function(parent, bool)
+	reserved.envadd = function(_, bool)
 		local private = {}
 		local newobj = {}
 		if bool then
@@ -161,14 +161,14 @@ local function makebase(intable, parent)
 		newobj.parent = parent or current
 		newobj.parent.leaves[newobj] = newobj
 		newobj.leaves = {}
-		
+
 		newobj.deleteleaf = function(leaf)
 			newobj.leaves[leaf] = nil
 		end
-		
+
 		--setmetatable(newenv, current)
-		setmetatable(newobj, private) 
-		
+		setmetatable(newobj, private)
+
 		private.__index = function(table, key)
 			current = newobj
 			if reserved[key] then
@@ -192,11 +192,11 @@ local function makebase(intable, parent)
 		end
 		return newobj
 	end
-	
+
 	return obj
 end
 
-musenv = {
+local musenv = {
 	make = makebase
 }
 

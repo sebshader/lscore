@@ -1,5 +1,4 @@
-require "comp"
-require "compat"
+local comp = require "comp"
 
 --scales
 --major
@@ -34,7 +33,7 @@ end
 --make general scales
 local function makescale(table)
 	return function(i)
-		return(table[math.floor(i % (#table - 1)) + 1])+ 
+		return(table[math.floor(i % (#table - 1)) + 1]) +
 			math.floor(i/(#table-1))*table[#table]
 	end
 end
@@ -59,11 +58,11 @@ local hm = makemode(0, hmscale)
 local mm = makemode(0, mmscale)
 
 --just do this kinda like in Common Music, but no enharmonics
-local name = {{"c"}, {"df", "cs"}, {"d"}, {"ef", "ds"}, 
+local name = {{"c"}, {"df", "cs"}, {"d"}, {"ef", "ds"},
 	{"e"}, {"f"}, {"gf", "fs"}, {"g"}, {"af", "gs"}, {"a"},
 	{"bf", "as"}, {"b"}, c=0, d=2, e=4, f=5,
 	g=7, a=9, b=11}
-	
+
 --mapping ratios to cents and steps
 --ratio to desired note from current note
 local function tors(ratio)
@@ -90,7 +89,7 @@ local function tonote(inkey)
 	local frac
 	local inflect = ""
 	inkey, frac = math.modf(inkey)
-	if frac > 0.333333 then 
+	if frac > 0.333333 then
 		inkey = (inkey + 1) % 12
 		if frac < 0.666666 then
 			inflect = "<"
@@ -106,52 +105,52 @@ local function tokey(insym, octave)
 	if typein == "number" then
 		return ratiostep(insym/440) + 69, octave
 	elseif typein == "string" then
-		local keynum = 0
-		local pos, dum, str = string.find(insym, "(%a)")
+		local keyn = 0
+		local pos, _, str = string.find(insym, "(%a)")
 		if not pos then return
-		else keynum = name[str] end
+		else keyn = name[str] end
 		pos = pos + 1
-		pos, dum, str = string.find(insym, "([fs])", pos)
+		pos, _, str = string.find(insym, "([fs])", pos)
 		if pos then
-			if str == "f" then keynum = keynum - 1
-			else keynum = keynum + 1 end
+			if str == "f" then keyn = keyn - 1
+			else keyn = keyn + 1 end
 			pos = pos + 1
 		end
 		str = string.match(insym, "([<>])", pos)
 		if str then
-			if str == "<" then keynum = keynum - .5
-			else keynum = keynum + .5 end
+			if str == "<" then keyn = keyn - .5
+			else keyn = keyn + .5 end
 		end
-		pos, dum, str = string.find(insym, "([+-]?%d)", pos)
+		pos, _, str = string.find(insym, "([+-]?%d)", pos)
 		if pos then octave = tonumber(str) end
 		octave = octave or 4
-		return ((octave + 1)*12) + keynum, octave
+		return ((octave + 1)*12) + keyn, octave
 	end
 end
-		
+
 --translate notes or keynums to hz
 local function tohz(ref, octave)
 	if type(ref) == "string" then
-		local keynum = 0
-		local pos, dum, str = string.find(insym, "(%a)")
+		local keyn = 0
+		local pos, _, str = string.find(ref, "(%a)")
 		if not pos then return
-		else keynum = name[str] end
+		else keyn = name[str] end
 		pos = pos + 1
-		pos, dum, str = string.find(insym, "([fs])", pos)
+		pos, _, str = string.find(ref, "([fs])", pos)
 		if pos then
-			if str == "f" then keynum = keynum - 1
-			else keynum = keynum + 1 end
+			if str == "f" then keyn = keyn - 1
+			else keyn = keyn + 1 end
 			pos = pos + 1
 		end
-		str = string.match(insym, "([<>])", pos)
+		str = string.match(ref, "([<>])", pos)
 		if str then
-			if str == "<" then keynum = keynum - .5
-			else keynum = keynum + .5 end
+			if str == "<" then keyn = keyn - .5
+			else keyn = keyn + .5 end
 		end
-		pos, dum, str = string.find(insym, "([+-]?%d)", pos)
+		pos, _, str = string.find(ref, "([+-]?%d)", pos)
 		if pos then octave = tonumber(str) end
 		octave = octave or 4
-		ref = ((octave + 1)*12) + keynum
+		ref = ((octave + 1)*12) + keyn
 	end
 	return 440*2^((ref - 69)/12), octave
 end
@@ -190,23 +189,23 @@ local function topc(insym)
 	if typein == "number" then
 		return math.floor((insym % 12) * 2) / 2
 	elseif typein == "string" then
-		local keynum
-		local pos, dum, str = string.find(insym, "(%a)")
+		local keyn
+		local pos, _, str = string.find(insym, "(%a)")
 		if not pos then return
-		else keynum = name[str] end
+		else keyn = name[str] end
 		pos = pos + 1
-		pos, dum, str = string.find(insym, "([fs])", pos)
+		pos, _, str = string.find(insym, "([fs])", pos)
 		if pos then
-			if str == "f" then keynum = keynum - 1
-			else keynum = keynum + 1 end
+			if str == "f" then keyn = keyn - 1
+			else keyn = keyn + 1 end
 			pos = pos + 1
 		end
 		str = string.match(insym, "([<>])", pos)
 		if str then
-			if str == "<" then keynum = keynum - .5
-			else keynum = keynum + .5 end
+			if str == "<" then keyn = keyn - .5
+			else keyn = keyn + .5 end
 		end
-		return math.floor((keynum % 12) * 2) / 2
+		return math.floor((keyn % 12) * 2) / 2
 	end
 end
 
@@ -242,7 +241,7 @@ end
 --parses it into a scale table (array) of semitones
 --local function loadscala(instring)
 
-mus = {
+local mus = {
 	mode = mode,
 	makemode = makemode,
 	scale = makescale,

@@ -1,4 +1,4 @@
-require "comp"
+local comp = require "comp"
 
 -- obj responds to pattern interface:
 -- anything that has an internal state and responds to .next()
@@ -29,63 +29,11 @@ local handler = function(input, count, nextcount)
 	return input, nextcount
 end
 
--- make rhythm distribution: args: # of possibilities, # of outcomes
--- # of outcomes is # of possibilities by default
--- returns difference of 2 numbers from 0 inclusive to 1 exclusive
--- if rep is true, at the end the pattern will output the difference between
--- 1 and the last number, and reset the pattern (create a new one)
-local function makerhy(pos, out, rep)
-	pos = pos or 4
-	out = out or pos
-	if out > pos then
-		out = pos
-	end
-	local rhy
-	local last
-	local count
-	local obj = { patt = true, type = "rhypat", rep = rep or true}
-	obj.reset = function(inpos, inout)
-		pos = inpos or pos
-		out = inout or out
-		rhy = {}
-		local urn = comrand.makeurn(pos)
-		for i=1, out do rhy[i] = (urn.next() - 1)/pos end
-		table.sort(rhy)
-		last = 0
-		count = 1
-	end
-	obj.count = function(num)
-		count = num or count
-		return count
-	end
-	obj.next = function()
-		if count > #rhy then
-			if obj.rep then
-				rhy = {}
-				local urn = comrand.makeurn(pos)
-				for i=1, out do rhy[i] = (urn.next() - 1)/pos end
-				table.sort(rhy)
-				local ret = rhy[1] + 1 - last
-				last = rhy[1]
-				count = 2
-				return ret
-			else return nil end
-		else
-			local ret = rhy[count] - last
-			last = rhy[count]
-			count = count + 1
-			return ret
-		end
-	end
-	obj.reset(pos, out)
-	return obj
-end
-
 -- urn class: random selection without repetitions.
 -- fbar 2007
 -- urn interface:
 
-function makeurn(size)
+local function makeurn(size)
 	local obj = {}
 	local arr
 	-- chosen values
@@ -108,7 +56,6 @@ function makeurn(size)
 		local out = index[input]
 		if out then
 			local keep = arr[last]
-			local res = arr[out]
 			arr[out] = keep
 			index[keep] = out
 			index[input] = false
@@ -158,19 +105,71 @@ function makeurn(size)
 	return obj
 end
 
+-- make rhythm distribution: args: # of possibilities, # of outcomes
+-- # of outcomes is # of possibilities by default
+-- returns difference of 2 numbers from 0 inclusive to 1 exclusive
+-- if rep is true, at the end the pattern will output the difference between
+-- 1 and the last number, and reset the pattern (create a new one)
+local function makerhy(pos, out, rep)
+	pos = pos or 4
+	out = out or pos
+	if out > pos then
+		out = pos
+	end
+	local rhy
+	local last
+	local count
+	local obj = { patt = true, type = "rhypat", rep = rep or true}
+	obj.reset = function(inpos, inout)
+		pos = inpos or pos
+		out = inout or out
+		rhy = {}
+		local urn = makeurn(pos)
+		for i=1, out do rhy[i] = (urn.next() - 1)/pos end
+		table.sort(rhy)
+		last = 0
+		count = 1
+	end
+	obj.count = function(num)
+		count = num or count
+		return count
+	end
+	obj.next = function()
+		if count > #rhy then
+			if obj.rep then
+				rhy = {}
+				local urn = makeurn(pos)
+				for i=1, out do rhy[i] = (urn.next() - 1)/pos end
+				table.sort(rhy)
+				local ret = rhy[1] + 1 - last
+				last = rhy[1]
+				count = 2
+				return ret
+			else return nil end
+		else
+			local ret = rhy[count] - last
+			last = rhy[count]
+			count = count + 1
+			return ret
+		end
+	end
+	obj.reset(pos, out)
+	return obj
+end
+
 --random walk integers
 --args:low, high, walk mode (drunk or not), limit mode (what to do at limits),
 -- step size, initial state
 
 --local table for lookups
-local walklmode = {["reflect"]=1, ["limit"]=2, ["avg"]=3, ["jump"]=4, 
+local walklmode = {["reflect"]=1, ["limit"]=2, ["avg"]=3, ["jump"]=4,
 	["stop"]=5}
 
 local function makewalk(inargs)
 	local obj = {}
 	inargs = inargs or {}
 	local low = inargs.low or inargs[1] or 1
-	local high = inargs.high or inargs[2] 
+	local high = inargs.high or inargs[2]
 	local mode = inargs.mode or inargs[3]
 	local lmode = inargs.lmode or inargs[4]
 	local state = inargs.state or inargs[6] or 0
@@ -182,7 +181,7 @@ local function makewalk(inargs)
 		-- "reset"
 		[0] = function() state = low end,
 		-- "reflect"
-		function() 
+		function()
 			state = comp.reflect(state, low, high)
 			if mode == 0 then step = -step end
 		end,
@@ -288,8 +287,8 @@ local function makewalker(intable, walkargs)
 		end
 	end
 	-- bool in these next two also decides to not set the range
-	obj.add = function(item, pos, bool) 
-		if pos then 
+	obj.add = function(item, pos, bool)
+		if pos then
 			pos = math.floor((pos - 1) % (#obj.arr + 1)) + 1
 			table.insert(obj.arr, pos, item)
 		else table.insert(obj.arr, item) end
@@ -303,12 +302,12 @@ local function makewalker(intable, walkargs)
 		local ret
 		local bool
 		-- current maximum counter (to reset to when pattern finishes)
-		ret, bool = handler(obj.arr[obj.walk.getset()], false, 
+		ret, bool = handler(obj.arr[obj.walk.getset()], false,
 			true)
 		if bool then obj.walk.next(step) end
 		return ret
 	end
-	obj.reset = function() 
+	obj.reset = function()
 		obj.walk.getset(1)
 	end
 	obj.get = function(i) return obj.arr[i] end
@@ -412,8 +411,8 @@ local function makepar(inarray)
 		end
 	end
 	-- bool in these next two also decides to not set the range
-	obj.add = function(item, pos) 
-		if pos then 
+	obj.add = function(item, pos)
+		if pos then
 			pos = math.floor((pos - 1) % (#inarray + 1)) + 1
 			table.insert(inarray, pos, item)
 		else table.insert(inarray, item) end
@@ -510,8 +509,8 @@ local function makepipe(inpat, f, bool, switch)
 	end
 	return obj
 end
-	
-compat = {
+
+local compat = {
 	handler = handler,
 	ispatt = ispatt,
 	walk = makewalk,
@@ -524,3 +523,5 @@ compat = {
 	walker = makewalker,
 	weight = makeweight
 }
+
+return compat

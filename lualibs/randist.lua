@@ -48,7 +48,7 @@ end
 --uses 12 iterations
 local function gauss(dev, mean)
 	local sum = 0.0
-	for k=1, 12 do
+	for _=1, 12 do
 		sum = sum + fran()
 	end
 	return dev*(sum-6) + mean
@@ -122,7 +122,7 @@ local function poisson(lambda)
 end
 
 
-randist = {
+local randist = {
 	fran = fran,
 	xlnear = xlnear,
 	triang = triang,

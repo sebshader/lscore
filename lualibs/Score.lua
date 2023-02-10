@@ -1,9 +1,9 @@
-require "Heap"
-require "comp"
-require "mus"
-require "musenv"
-require "compat"
-require "oscpat"
+Heap = require "Heap"
+Comp = require "Comp"
+Mus = require "mus"
+Musenv = require "musenv"
+Compat = require "Compat"
+Oscpat = require "oscpat"
 
 -- untested - from
 --https://github.com/pkulchenko/MobDebug/blob/master/src/mobdebug.lua#L65-L81
@@ -64,7 +64,7 @@ end
 
 --the user of Score defines clock_callback
 Score = {}
-Score.clock_callback=function(self, time)
+Score.clock_callback=function(_, _)
 			error([[define clock_callback as object:clock_callback
 				(time). after time this callback function should call
 				self:callback(). varargs from delay(time, ...) 
@@ -73,19 +73,19 @@ Score.clock_callback=function(self, time)
 			return nil
 end
 		-- the user can add a function to call once a score completes
-Score.done=function(self) end,
-		[[--add common score functions to this(e.g. 
+Score.done = function(_) end
+		--[[add common score functions to this(e.g. 
 		function Score.ENV.makemarkov() blah blah end
-		these should not need access to the Score object dataspace--]]
+		these should not need access to the Score object dataspace]]--
 Score.ENV = {}
 
 Score.ENV.__index = Score.ENV
 setmetatable(Score.ENV, {__index = _G})
 
 local function makepqmbr(f, time, DYN, args)
-	local time = time or 0
-	local DYN = DYN or {}
-	local args = args or {}
+	time = time or 0
+	DYN = DYN or {}
+	args = args or {}
 	return {time, coroutine.create(f), f, DYN, args}
 end
 
@@ -94,7 +94,7 @@ function Score:new()
 	--inherit both the class and score functions
 	setmetatable(object, self)
 	self.__index = self
-	
+
 	object.pqueue = Heap:new(function(a, b) return a[1] > b[1] end)
 	-- per-instance "globals"
 	--load functions into here
@@ -116,7 +116,7 @@ function Score:new()
 		add = function(f, time, bool, ...)
 		-- create dynamically scoped globals for each new coroutine
 			if not object.curENV then return end
-			
+
 			local dynamic = object.curENV:envadd(nil, bool)
 			dynamic.fms(time)
 			object.pqueue:insert(makepqmbr(
@@ -141,8 +141,8 @@ function Score:new()
 		pnotef = function(beginf, endf, prelease, dur, attack)
 			local obj = {prelease = prelease or 0, attack = attack or 0,
 				dur = dur or 1}
-			obj.play = function(bargs, eargs, dur)
-				dur = dur or obj.dur
+			obj.play = function(bargs, eargs, duration)
+				duration = duration or obj.dur
 				beginf(bargs)
 				object.ENV.add(endf,
 					math.max(dur*object.curENV.bv() - obj.prelease, obj.attack),
@@ -202,7 +202,7 @@ function Score:new()
 		--call a function with fcall and then delay
 		--(f is an array for fcall)
 		fdelay = function(f, deltime, ...)
-			local res = comp.fcall(f)
+			local res = Comp.fcall(f)
 			object.ENV.delay(deltime, ...)
 			return res
 		end,
@@ -230,7 +230,7 @@ function Score:new()
 	object.ENV.setg = function(key, value) object.loadENV[key] = value end
 	object.ENV.getg = function(key) return object.loadENV[key] end
 	setmetatable(object.loadENV, object.ENV)
-	object.base = musenv.make(nil, object.loadENV)
+	object.base = Musenv.make(nil, object.loadENV)
 	object.ENV.__index = object.ENV
 	setmetatable(object.ENV, Score.ENV)
 	return object
@@ -289,7 +289,7 @@ function Score:callback(time)
 		current[4].parent.deleteleaf(current[4])
 	end
 	self.pqueue:remove()
-	if self.pqueue[1] then 
+	if self.pqueue[1] then
 		self.curENV = self.pqueue[1][4]
 		-- tail call hopefully? (must be in form "return f()" I guess)
 		return self:clock_callback(self.pqueue[1][1] - self.time)
@@ -334,12 +334,11 @@ function Score.ENV.pplayer(pattern, time, mult)
 	local obj = {type = "patplayer"}
 	-- make time into a pattern if it isn't one
 	local count
-	local objcount
 	local current = false
 	obj.time = function(intime)
 		if intime then
-			if not compat.ispatt(intime) then
-			time = compat.const(intime)
+			if not Compat.ispatt(intime) then
+			time = Compat.const(intime)
 			else time = intime end
 		end
 		if time.type ==  "constpat" then return time.val end
@@ -357,8 +356,9 @@ function Score.ENV.pplayer(pattern, time, mult)
 			-- check if this was the last thing added
 			if mycount ~= current then return
 			else current = this.curENV end
-			if comp.isnumber(obj.mult) then count = obj.mult
+			if Comp.isnumber(obj.mult) then count = obj.mult
 			else count = nil end
+            local del
 			repeat
 				del = obj.c.next() or time.next()
 				if count then 
@@ -368,7 +368,7 @@ function Score.ENV.pplayer(pattern, time, mult)
 						return
 					end
 				end
-				delay(del)				
+				delay(del)
 			until current ~= this.curENV
 		end
 	end
@@ -383,8 +383,8 @@ function Score.ENV.stepseq(inseq, mtx, time, mul)
 			inseq[i] = {}
 		end
 	end
-	obj.walker = compat.walker(inseq)
-	obj.player = Score.ENV.pplayer(compat.route(obj.walker, mtx), 
+	obj.walker = Compat.walker(inseq)
+	obj.player = Score.ENV.pplayer(Compat.route(obj.walker, mtx),
 		time, mul)
 	-- set a step + lane value
 	obj.set = function(step, lane, value)
@@ -402,24 +402,24 @@ function Score.ENV.stepseq(inseq, mtx, time, mul)
 	end
 	obj.destep = obj.walker.rem
 	obj.addstep = obj.walker.add
-	obj.addf = function(step, mul)
+	obj.addf = function(step, multiplier)
 		if step then obj.walker.walk.getset(step) end
-		if mul then obj.player.mult = mul end
+		if mul then obj.player.mult = multiplier end
 		return obj.player.addf()
 	end
 	return obj
 end
 
--- 1st arg: {destination, index} to be used by comp.route
+-- 1st arg: {destination, index} to be used by Comp.route
 function Score.ENV.line(f, tincr, value)
 	tincr = tincr or 10
 	value = value or 0
 	local inter = {type = "line"}
-	inter.player = Score.ENV.pplayer(compat.route(compat.walk{lmode = "limit"}), 
+	inter.player = Score.ENV.pplayer(Compat.route(Compat.walk{lmode = "limit"}),
 		tincr)
 	-- set, don't output value
 	inter.set = function(v)
-		value = v or values
+		value = v or value
 		inter.player.stop()
 		return value
 	end
@@ -434,7 +434,7 @@ function Score.ENV.line(f, tincr, value)
 			tab[i+1] = router[1][i]
 		end
 		inter.player.stop()
-		comp.route(tab, router[2])
+		Comp.route(tab, router[2])
 	end
 	-- what to do with the value?
 	-- infunc is in the form {{array arg arg la} position}
@@ -459,12 +459,12 @@ function Score.ENV.line(f, tincr, value)
 		return tincr
 	end
 	-- the function to: add(lineobj.addf, time, bool, goto, time)
-	inter.addf = function(goto, time)
+	inter.addf = function(target, time)
 		-- store local increment
 		if tincr ~= inter.player.time() then inter.player.time(tincr) end
 		local times = math.floor(time/tincr)
-		local diffval = (goto - value)/times
-		inter.player.c.c.setrange(value, goto)
+		local diffval = (target - value)/times
+		inter.player.c.c.setrange(value, target)
 		inter.player.c.c.getset(value)
 		inter.player.c.c.step(diffval)
 		inter.player.mult = times + 1
@@ -482,18 +482,18 @@ function Score.ENV.reline(f, tincr, value)
 	tincr = tincr or 10
 	value = value or 0
 	local gotodif
-	
+
 	local inter = {type = "reline"}
-	inter.player = Score.ENV.pplayer(compat.route(compat.pipe(
-		compat.walk{lmode = "limit", low = 0, high = 1}, 
+	inter.player = Score.ENV.pplayer(Compat.route(Compat.pipe(
+		Compat.walk{lmode = "limit", low = 0, high = 1},
 			{function(val)
-				return (1 - comp.unexp(val))*gotodif + value
-			end}, 
-			true)), 
+				return (1 - Comp.unexp(val))*gotodif + value
+			end},
+			true)),
 		tincr)
 	-- set, don't output value
 	inter.set = function(v)
-		value = v or values
+		value = v or value
 		inter.player.stop()
 		return value
 	end
@@ -508,7 +508,7 @@ function Score.ENV.reline(f, tincr, value)
 			tab[i+1] = router[1][i]
 		end
 		inter.player.stop()
-		comp.route(tab, router[2])
+		Comp.route(tab, router[2])
 	end
 	-- what to do with the value?
 	-- infunc is in the form {{array arg arg la} position}
@@ -533,7 +533,7 @@ function Score.ENV.reline(f, tincr, value)
 		return tincr
 	end
 	-- the function to: add(lineobj.addf, time, bool, goto, time)
-	inter.addf = function(goto, time)
+	inter.addf = function(target, time)
 		-- store local increment
 		if tincr ~= inter.player.time() then inter.player.time(tincr) end
 		local times = math.floor(time/tincr)
@@ -543,7 +543,7 @@ function Score.ENV.reline(f, tincr, value)
 		inter.player.c.c.c.getset(1)
 		inter.player.c.c.c.step(diffval)
 		inter.player.mult = times + 1
-		gotodif = goto - value
+		gotodif = target - value
 		return inter.player.addf()
 	end
 	-- stop where you are
@@ -558,18 +558,18 @@ function Score.ENV.eline(f, tincr, value)
 	tincr = tincr or 10
 	value = value or 0
 	local gotodif
-	
+
 	local inter = {type = "eline"}
-	inter.player = Score.ENV.pplayer(compat.route(compat.pipe(
-		compat.walk{lmode = "limit", low = 0, high = 1}, 
+	inter.player = Score.ENV.pplayer(Compat.route(Compat.pipe(
+		Compat.walk{lmode = "limit", low = 0, high = 1},
 			{function(val)
-				return comp.unexp(val)*gotodif + value
-			end}, 
-			true)), 
+				return Comp.unexp(val)*gotodif + value
+			end},
+			true)),
 		tincr)
 	-- set, don't output value
 	inter.set = function(v)
-		value = v or values
+		value = v or value
 		inter.player.stop()
 		return value
 	end
@@ -584,7 +584,7 @@ function Score.ENV.eline(f, tincr, value)
 			tab[i+1] = router[1][i]
 		end
 		inter.player.stop()
-		comp.route(tab, router[2])
+		Comp.route(tab, router[2])
 	end
 	-- what to do with the value?
 	-- infunc is in the form {{array arg arg la} position}
@@ -609,7 +609,7 @@ function Score.ENV.eline(f, tincr, value)
 		return tincr
 	end
 	-- the function to: add(lineobj.addf, time, bool, goto, time)
-	inter.addf = function(goto, time)
+	inter.addf = function(target, time)
 		-- store local increment
 		if tincr ~= inter.player.time() then inter.player.time(tincr) end
 		local times = math.floor(time/tincr)
@@ -619,7 +619,7 @@ function Score.ENV.eline(f, tincr, value)
 		inter.player.c.c.c.getset(0)
 		inter.player.c.c.c.step(diffval)
 		inter.player.mult = times + 1
-		gotodif = goto - value
+		gotodif = target - value
 		return inter.player.addf()
 	end
 	-- stop where you are
@@ -632,7 +632,7 @@ end
 function Score.ENV.oscil(f, sp, osctype, freq, pwm)
 	local inter = {type = "oscillator"}
 	freq = freq or 0
-	inter.player = Score.ENV.pplayer(compat.route(oscpat.new(osctype)))
+	inter.player = Score.ENV.pplayer(Compat.route(oscpat.new(osctype)))
 	inter.setf = function(infunc)
 		if type(infunc) ~= "table" then
 			--assume function with 1 arg
@@ -673,5 +673,5 @@ function Score.ENV.oscil(f, sp, osctype, freq, pwm)
 	end
 	return inter
 end
-	
+
 return Score

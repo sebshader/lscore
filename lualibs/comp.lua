@@ -816,7 +816,7 @@ local function split(str, pat)
    return t
 end
 
-comp = {
+local comp = {
 	log2 = log2,
 	clip = clip,
 	lagrange = lagrange,
