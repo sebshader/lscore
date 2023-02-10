@@ -21,13 +21,13 @@ pd._clearrequirepath()
 Score.ENV.print = function(inthing) pd.post(tostring(inthing)) end
 --send to a receiver in format: {receiver, sel, arg1, arg2, etc}
 Score.ENV.pdsend = function(atable)
-	local cop = comp.copytab(atable)
+	local cop = Comp.copytab(atable)
 	local rec = table.remove(cop, 1)
 	local sel = table.remove(cop, 1)
 	pd.send(rec, sel, cop)
 end
 
-function lscore:initialize(sel, atoms)
+function lscore:initialize(_, atoms)
 	self.inlets = 1
 	self.outlets = 1
 	self.score = Score:new()
@@ -51,13 +51,13 @@ end
 
 function lscore:postinitialize()
 	self.clock = pd.Clock:new():register(self, "trigger")
-	
+
 	local obj = self
 	function self.score:clock_callback(time)
 		obj.clock:delay(time)
 		obj.time = time
 	end
-	function self.score:done() 
+	function self.score:done()
 		obj:outlet(1, "bang", {}) end
     self.score.ENV.pdopath = self._canvaspath
 end
@@ -109,12 +109,12 @@ end
 --call a function in loadENV
 function lscore:in_1_call(atoms)
 	local name = atoms[1]
-	name = comp.split(name, "%.")
+	name = Comp.split(name, "%.")
 	local t = self.score.loadENV
 	for i=1, #name do
 		if type(t[name[i]]) == "table" then
 			t = t[name[i]]
-		else 
+		else
 		 	name = name[i]
 			break
 		end
