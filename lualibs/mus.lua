@@ -47,10 +47,10 @@ local function fixscale(input)
 	local diff = other[1]
 	--other must be longer because input was flattened
 	for i=1, #other do
-		input[i] = other[i] - diff
+		other[i] = other[i] - diff
 	end
 	--return input for convenience
-	return input
+	return other
 end
 
 local m = makemode(-2)
@@ -67,7 +67,7 @@ local name = {{"c"}, {"df", "cs"}, {"d"}, {"ef", "ds"},
 --mapping ratios to cents and steps
 --ratio to desired note from current note
 local function tors(ratio)
-	return 12*comp.log2(ratio)
+	return 17.31234049066756088865182139358012136653997004032135009765625*math.log(ratio)
 end
 
 local function tosr(step)
@@ -101,10 +101,10 @@ local function tonote(inkey)
 end
 
 -- translates a note or hertz to a keynum
-local function tokey(insym, octave)
+local function tokey(insym)
 	local typein = type(insym)
 	if typein == "number" then
-		return ratiostep(insym/440) + 69, octave
+		return ratiostep(insym/440) + 69
 	elseif typein == "string" then
         local keyr
 		local pos, _, str = string.find(insym, "(%a)")
@@ -122,6 +122,7 @@ local function tokey(insym, octave)
 			if str == "<" then keyr = keyr - .5
 			else keyr = keyr + .5 end
 		end
+        local octave
 		pos, _, str = string.find(insym, "([+-]?%d)", pos)
 		if pos then octave = tonumber(str) end
 		octave = octave or 4
@@ -160,14 +161,14 @@ local function note(list)
 	return comp.rmap(list, tonote)
 end
 
-local function keynum(list, octave)
+local function keynum(list)
 	if comp.istable(list) then
 		local lt = {}
 		for index,value in pairs(list) do
-			lt[index], octave = keynum(value, octave)
+			lt[index] = keynum(value)
 		end
 		return lt
-	else return tokey(list, octave) end
+	else return tokey(list) end
 end
 
 local function hertz(list, octave)
@@ -248,6 +249,7 @@ local mus = {
 	scale = makescale,
 	fixscale = fixscale,
 	name = name,
+    tonote = tonote,
 	note = note,
 	keynum = keynum,
 	hertz = hertz,
@@ -256,6 +258,11 @@ local mus = {
 	transpose = transpose,
 	ratiostep = ratiostep,
 	stepratio = stepratio,
+    tors = tors,
+    tosr = tosr,
+    topc = topc,
+    tokey = tokey,
+    tohz = tohz,
 	m = m,
 	M = M,
 	hm = hm,
