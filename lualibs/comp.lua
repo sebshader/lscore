@@ -37,8 +37,6 @@ local function unexp(input)
 	if input <= 2 then return 0 end
 	return lagrange(input, exptab)
 end
-	
-
 
 --scale a range from (0, 1) to (add, add+scale)
 local function sfrom(input, scale, add)
@@ -52,8 +50,8 @@ end
 --if lower = upper, resolves to fractional part of input
 local function sto(input, lower, upper)
 	if not lower then return 1
-	elseif not upper then 
-		upper = lower 
+	elseif not upper then
+		upper = lower
 		lower = 0
 	end
 	if upper < lower then
@@ -64,11 +62,19 @@ local function sto(input, lower, upper)
 	return (input - lower)/(upper - lower)
 end
 
+--scale number from range a, b to range 0, 1
+local function scaletou(input, a, b)
+    return (input - a)/(b - a)
+end
+
+--scale number from range 0, 1 to range a, b
+local function scalefromu(input, a, b)
+    return input*(b-a) + a
+end
+
 --scale from range a, b to range c, d
 local function scalef(input, a, b, c, d)
-	d = d - c
-	input = scaletou(input, a, b)
-	return scalefromu(input, d, c)
+	return (input-a)*(d - c)/(b - a) + c
 end
 
 --[[
@@ -154,17 +160,6 @@ local function pick(table)
 	return(table[math.random(#table)])
 end
 
---shuffle table, from Moses
-local function shuffle(t, seed)
-  if seed then math.randomseed(seed) end
-  local shuffled = {}
-  comp.each(t, function(index,value)
-    local randPos = math.floor(math.random()*index)+1
-	shuffled[index] = shuffled[randPos]
-    shuffled[randPos] = value
-  end)
-  return shuffled
-end
 
 -------- from moses library---------------------------------
 -- http://yonaba.github.io/Moses/
@@ -192,11 +187,11 @@ end
 -- by S. Shader, needed to put after istable()
 local function rmap(table, f, ...)
 	-- need to pass varargs here because upvalue doesn't work
-	if istable(table) then return map(table, function(index, value, ...)
+	if istable(table) then return map(table, function(_, value, ...)
 			return rmap(value, f, ...)
 		end)
 	else return f(table, ...) end
-end	
+end
 
 --- Checks if the given argument is an array. Assumes `obj` is an array
 -- if is a table with integer numbers starting at 1.
@@ -208,7 +203,7 @@ local function isarray(obj)
   -- Thanks @Wojak and @Enrique García Cota for suggesting this
   -- See : http://love2d.org/forums/viewtopic.php?f=3&t=77255&start=40#p163624
   local i = 0
-  for __ in pairs(obj) do
+  for _ in pairs(obj) do
      i = i + 1
      if isnil(obj[i]) then return false end
   end
@@ -225,19 +220,10 @@ local function isinteger(obj)
   return isnumber(obj) and math.floor(obj)==obj
 end
 
-
---- Counts occurrences of a given value in a table. Uses @{isEqual} to compare values.
--- @name count
--- @tparam table t a table
--- @tparam[opt] value value a value to be searched in the table. If not given, the @{size} of the table will be returned
--- @treturn number the count of occurrences of `value`
-local function countn(t, value)
-  if isnil(value) then return size(t) end
-  local count = 0
-  each(t, function(k,v)
-    if isequal(v, value) then count = count + 1 end
-  end)
-  return count
+local function countt(t)  -- raw count of items in an map-table
+  local i = 0
+    for _,_ in pairs(t) do i = i + 1 end
+  return i
 end
 
 --- Counts the number of values in a collection. If being passed more than one args
@@ -248,9 +234,9 @@ local function size(...)
   if isnil(arg1) then
     return 0
   elseif istable(arg1) then
-    return count(args[1])
+    return countt(args[1])
   else
-    return count(args)
+    return countt(args)
   end
 end
 
@@ -281,9 +267,9 @@ local function isequal(objA, objB, useMt)
     if isnil(v2) or not isequal(v1,v2,useMt) then return false end
   end
 
-  for i,v1 in pairs(objB) do
+  for i,_ in pairs(objB) do
     local v2 = objA[i]
-    if sinil(v2) then return false end
+    if isnil(v2) then return false end
   end
 
   return true
@@ -296,11 +282,37 @@ local function each(t, f, ...)
   end
 end
 
+--- Counts occurrences of a given value in a table. Uses @{isEqual} to compare values.
+-- @name count
+-- @tparam table t a table
+-- @tparam[opt] value value a value to be searched in the table. If not given, the @{size} of the table will be returned
+-- @treturn number the count of occurrences of `value`
+local function countn(t, value)
+  if isnil(value) then return #t end
+  local count = 0
+  each(t, function(_,v)
+    if isequal(v, value) then count = count + 1 end
+  end)
+  return count
+end
+
+--shuffle table, from Moses
+local function shuffle(t, seed)
+  if seed then math.randomseed(seed) end
+  local shuffled = {}
+  each(t, function(index,value)
+    local randPos = math.floor(math.random()*index)+1
+	shuffled[index] = shuffled[randPos]
+    shuffled[randPos] = value
+  end)
+  return shuffled
+end
+
 --Reduces a table, left-to-right. Folds the table from the first element to the last element
 -- to into a single value, with respect to a given iterator and an initial state.
 -- The given function takes a state and a value and returns a new state.
 local function reduce(t, f, state)
-  for __,value in pairs(t) do
+  for _,value in pairs(t) do
     if state == nil then state = value
     else state = f(state,value)
     end
@@ -322,15 +334,15 @@ local function identity(value) return value end
 
 local function extract(list,comp,transform,...) -- extracts value from a list
   local ans
-  local transform = transform or identity
-  for index,value in pairs(list) do
+  transform = transform or identity
+  for _,value in pairs(list) do
     if not ans then ans = transform(value,...)
     else
-      local value = transform(value,...)
+      value = transform(value,...)
       ans = comp(ans,value) and ans or value
     end
   end
-  return _ans
+  return ans
 end
 
 --- Clones a table while dropping values passing an iterator test.
@@ -352,7 +364,7 @@ end
 local function lselect(t, f, ...)
   local mapped = map(t, f, ...)
   local lt = {}
-  for index,value in pairs(_mapped) do
+  for index,value in pairs(mapped) do
     if value then lt[#lt+1] = t[index] end
   end
   return lt
@@ -364,7 +376,7 @@ end
 -- @tparam string a property, will be used to index in each value: `value[property]`
 -- @treturn table an array of values for the specified property
 local function pluck(t, property)
-  return reject(map(t,function(__,value)
+  return reject(map(t,function(_,value)
       return value[property]
     end), isnot)
 end
@@ -377,7 +389,7 @@ local function max(t, transform, ...)
   return extract(t, f_max, transform, ...)
 end
 
-function min(t, transform, ...)
+local function min(t, transform, ...)
   return extract(t, f_min, transform, ...)
 end
 
@@ -391,7 +403,7 @@ end
 -- @treturn table a table of chunks (arrays)
 local function chunk(array, f, ...)
   if not isarray(array) then return array end
-  local ch, ck, prev = {}, 0
+  local ch, ck, prev = {}, 0, nil
   local mask = map(array, f,...)
   each(mask, function(k,v)
     prev = (prev==nil) and v or prev
@@ -423,7 +435,7 @@ end
 -- @tparam[opt] number n the number of values to be collected, defaults to 1.
 -- @treturn table a new array
 local function first(array, n)
-  local n = n or 1
+  n = n or 1
   return slice(array,1, min(n,#array))
 end
 
@@ -443,10 +455,10 @@ end
 -- @tparam[opt] boolean shallow specifies the flattening depth
 -- @treturn table a new array, flattened
 local function flatten(array, shallow)
-  local shallow = shallow or false
+  shallow = shallow or false
   local new_flattened
   local flat = {}
-  for key,value in pairs(array) do
+  for _,value in pairs(array) do
     if istable(value) then
       new_flattened = shallow and value or flatten (value)
       each(new_flattened, function(_,item) flat[#flat+1] = item end)
@@ -463,7 +475,7 @@ end
 -- @treturn table a new array
 local function zip(...)
   local arg = {...}
-  local len = max(map(arg,function(i,v)
+  local len = max(map(arg,function(_,v)
       return #v
     end))
   local ans = {}
@@ -481,7 +493,7 @@ end
 local function append(array, other)
   local t = {}
   for i,v in ipairs(array) do t[i] = v end
-  for i,v in ipairs(other) do t[#t+1] = v end
+  for _,v in ipairs(other) do t[#t+1] = v end
   return t
 end
 
@@ -505,9 +517,9 @@ local function range(...)
   local arg = {...}
   local start, stop, step
   if #arg==0 then return {}
-  elseif #arg==1 then _stop,_start,_step = arg[1],0,1
-  elseif #arg==2 then _start,_stop,_step = arg[1],arg[2],1
-  elseif #arg == 3 then _start,_stop,_step = arg[1],arg[2],arg[3]
+  elseif #arg==1 then stop,start, step = arg[1],0,1
+  elseif #arg==2 then start,stop,step = arg[1],arg[2],1
+  elseif #arg == 3 then start,stop,step = arg[1],arg[2],arg[3]
   end
   if (step and step==0) then return {} end
   local ranged = {}
@@ -524,7 +536,7 @@ end
 -- @treturn table a new array of `n` values
 local function rep(value, n)
   local ret = {}
-  for i = 1, n do ret[#ret+1] = value end
+  for _ = 1, n do ret[#ret+1] = value end
   return ret
 end
 
@@ -561,23 +573,6 @@ local function bsearch(tbl, val, get)
 	return -r - 1
 end
 
---pick a random member of a table of integer indices
-local function pick(table)
-	return(table[math.random(#table)])
-end
-
---shuffle table, from Moses
-local function shuffle(t, seed)
-  if seed then math.randomseed(seed) end
-  local shuffled = {}
-  comp.each(t, function(index,value)
-    local randPos = math.floor(math.random()*index)+1
-	shuffled[index] = shuffled[randPos]
-    shuffled[randPos] = value
-  end)
-  return shuffled
-end
-
 -- one time weighting of table in format:
 -- {{item1, weight1}, {item2, weight2}, etc}
 -- where weights are positive numbers, defaulting to 1 if absent
@@ -605,7 +600,7 @@ local function compose(...)
   local f = reverse {...}
   return function (...)
       local temp
-      for i, func in ipairs(f) do
+      for _, func in ipairs(f) do
         temp = temp and func(temp) or func(...)
       end
       return temp
@@ -661,12 +656,6 @@ local function bindn(f, ...)
     end
 end
 
-local function count(t)  -- raw count of items in an map-table
-  local i = 0
-    for k,v in pairs(t) do i = i + 1 end
-  return i
-end
-
 ---------------------------- from abclua:
 -- return the greatest common divisor of a and b
 local function gcd(a, b)
@@ -691,7 +680,7 @@ local function copytab(orig)
     for i,v in pairs(orig) do
         copy[i] = v
     end
-    return copy   
+    return copy
 end
 
 
@@ -704,7 +693,7 @@ local function deepcopy(orig)
         copy = {}
         for orig_key, orig_value in next, orig, nil do
             copy[orig_key] = deepcopy(orig_value)
-        end        
+        end
     else -- number, string, boolean, etc
         copy = orig
     end
@@ -713,7 +702,7 @@ end
 
 --function to do something many times
 local function domult (times, f, ...)
-	for i=1, (times - 1) do
+	for _=1, (times - 1) do
 		f(...)
 	end
 	return f(...)
@@ -742,7 +731,7 @@ local function route(intable, addarg, switch)
 		local trav = intable
 		local ltable
 		local lindex
-		for i, v in ipairs(switch) do
+		for _, v in ipairs(switch) do
 			-- if an index doesn't exist, create it
 			if type(trav) ~= "table" then
 				trav = {}
@@ -761,8 +750,7 @@ end
 
 --call all promises or structures for route in a table
 local function callall (intable)
-	local val
-	for i, v in pairs(intable) do
+	for _, v in pairs(intable) do
 		if isfunction(v) then v()
 		elseif istable(v) then route(v) end
 	end
@@ -779,7 +767,7 @@ local function storargs(intable)
 		fcall(obj.args)
 	end
 	obj.setcall = function(item, index)
-		args[index] = item
+		obj.args[index] = item
 		obj.call()
 	end
 	return obj
@@ -787,11 +775,11 @@ end
 
 -- cyclic counter maker
 local function ccount(limit)
-	local count = 1
+	local idx = 1
 	return function()
-		local ret = count
-		count = count + 1
-		if count > limit then count = 1 end
+		local ret = idx
+		idx = idx + 1
+		if idx > limit then idx = 1 end
 		return ret
 	end
 end
@@ -881,7 +869,10 @@ local comp = {
 	stargs = storargs,
 	callall = callall,
 	ccount = ccount,
-	split = split
+    countt = countt,
+	split = split,
+    scaletou = scaletou,
+    scalefromu = scalefromu
 }
 
 return comp

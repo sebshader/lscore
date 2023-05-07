@@ -1,4 +1,3 @@
-local mus = require "mus"
 local floor = math.floor
 
 --note: every child must be explicitly cleaned up

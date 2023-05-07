@@ -1,4 +1,4 @@
-local comp = require "comp"
+local Comp = require "comp"
 
 -- obj responds to pattern interface:
 -- anything that has an internal state and responds to .next()
@@ -15,7 +15,7 @@ end
 -- pattern counter is in the form of a member being {pattern, times}
 local handler = function(input, count, nextcount)
 	if ispatt(input) then input = input.next()
-	elseif comp.isfunction(input) then input = input()
+	elseif Comp.isfunction(input) then input = input()
 	elseif type(input) == "table" then
 		if ispatt(input[1]) and type(input[2]) == "number" then
 			if input[3] then input[3] = input[3] - 1
@@ -182,7 +182,7 @@ local function makewalk(inargs)
 		[0] = function() state = low end,
 		-- "reflect"
 		function()
-			state = comp.reflect(state, low, high)
+			state = Comp.reflect(state, low, high)
 			if mode == 0 then step = -step end
 		end,
 		-- "limit"
@@ -451,11 +451,11 @@ the second argument is a table of tables:
 incoming array (so they are "parallel")
 destination is a function call, without the added value in it
 to take the value from, destination can be either an array or function
-in the style of comp.route (e.g.). {table, index} to assign to an array
+in the style of Comp.route (e.g.). {table, index} to assign to an array
 
 the pattern value is placed into the 2nd member of this array, unless
 there is a 2nd optional-index value, in which case the value is placed into the 
-optional-index. This can be an array, which represents an address (see comp.route)
+optional-index. This can be an array, which represents an address (see Comp.route)
 the special destination "ret" designates the value to be returned (if any)
 if "ret" has an index then it collects it's output in an array, else
 it just outputs a value --]]
@@ -476,11 +476,11 @@ local function makeroute(inpat, routetable)
 				if v[1] == "ret" then
 					if v[2] then
 						if not ret then ret = {} end
-						comp.route(ret, member[i], v[2])
+						Comp.route(ret, member[i], v[2])
 					else ret = member[i] end
 				else
-					local args = comp.copytab(v[1])
-					comp.route(args, member[i], v[2])
+					local args = Comp.copytab(v[1])
+					Comp.route(args, member[i], v[2])
 				end
 			end
 		end
@@ -489,7 +489,7 @@ local function makeroute(inpat, routetable)
 	return obj
 end
 
--- calls comp.route with f (which should be a table), and switch
+-- calls Comp.route with f (which should be a table), and switch
 -- (works similarly to the route pattern)
 -- next() returns the result
 -- note that anything that calls handler with a function will provide the result
@@ -503,8 +503,8 @@ local function makepipe(inpat, f, bool, switch)
 	obj.ret = bool
 	obj.next = function()
 		local ret = obj.c.next()
-		local arg = comp.copytab(obj.f)
-		ret = comp.route(arg, ret, obj.switch)
+		local arg = Comp.copytab(obj.f)
+		ret = Comp.route(arg, ret, obj.switch)
 		if obj.ret then return ret end
 	end
 	return obj

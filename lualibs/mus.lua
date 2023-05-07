@@ -15,9 +15,10 @@ local mmscale = {0, 2, 3, 5, 7, 9, 10, 12}
 -- i is number to look up in the scale (0-based)
 local function mode(i, k, table)
 	table = table or Mscale
-	k = k or 0
+	k = k or 1
 	local size = table[#table]
-	k = math.floor(k) % size
+    -- subtract 1 for modulo (e.g. we want 0 - 6, not 1- 7)
+	k = math.floor(k) % (#table-1)
 	i = math.floor(i+0.5)
 	return ((table[((i + k) % (#table - 1)) + 1] - table[k + 1]) % size)
 		+ math.floor(i/(#table-1))*size
@@ -95,8 +96,8 @@ local function tonote(inkey)
 			inflect = "<"
 		end
 	end
-	octave = tostring(octave)
-	return(name[inkey + 1][1] .. inflect .. octave)
+	local octaves = tostring(octave)
+	return(name[inkey + 1][1] .. inflect .. octaves)
 end
 
 -- translates a note or hertz to a keynum
@@ -105,33 +106,33 @@ local function tokey(insym, octave)
 	if typein == "number" then
 		return ratiostep(insym/440) + 69, octave
 	elseif typein == "string" then
-		local keyn = 0
+        local keyr
 		local pos, _, str = string.find(insym, "(%a)")
 		if not pos then return
-		else keyn = name[str] end
+		else keyr = name[str] end
 		pos = pos + 1
 		pos, _, str = string.find(insym, "([fs])", pos)
 		if pos then
-			if str == "f" then keyn = keyn - 1
-			else keyn = keyn + 1 end
+			if str == "f" then keyr = keyr - 1
+			else keyr = keyr + 1 end
 			pos = pos + 1
 		end
 		str = string.match(insym, "([<>])", pos)
 		if str then
-			if str == "<" then keyn = keyn - .5
-			else keyn = keyn + .5 end
+			if str == "<" then keyr = keyr - .5
+			else keyr = keyr + .5 end
 		end
 		pos, _, str = string.find(insym, "([+-]?%d)", pos)
 		if pos then octave = tonumber(str) end
 		octave = octave or 4
-		return ((octave + 1)*12) + keyn, octave
+		return ((octave + 1)*12) + keyr, octave
 	end
 end
 
 --translate notes or keynums to hz
 local function tohz(ref, octave)
 	if type(ref) == "string" then
-		local keyn = 0
+		local keyn
 		local pos, _, str = string.find(ref, "(%a)")
 		if not pos then return
 		else keyn = name[str] end

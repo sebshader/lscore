@@ -1,8 +1,8 @@
-Heap = require "Heap"
-Comp = require "Comp"
+Heap = require "heap"
+Comp = require "comp"
 Mus = require "mus"
 Musenv = require "musenv"
-Compat = require "Compat"
+Compat = require "compat"
 Oscpat = require "oscpat"
 
 -- untested - from

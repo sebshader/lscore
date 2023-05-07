@@ -47,7 +47,7 @@ function Heap:clear()
 end
 
 function Heap:new(cmp)
-	object = {comp = cmp or function(a, b) return a < b end}
+	local object = {comp = cmp or function(a, b) return a < b end}
 	setmetatable(object, self)
 	self.__index = self
 	return object
