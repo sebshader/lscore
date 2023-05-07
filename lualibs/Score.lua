@@ -1,4 +1,4 @@
-Heap = require "heap"
+Heap = require "Heap"
 Comp = require "comp"
 Mus = require "mus"
 Musenv = require "musenv"
