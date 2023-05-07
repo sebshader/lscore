@@ -15,7 +15,7 @@ local mmscale = {0, 2, 3, 5, 7, 9, 10, 12}
 -- i is number to look up in the scale (0-based)
 local function mode(i, k, table)
 	table = table or Mscale
-	k = k or 1
+	k = k or 0
 	local size = table[#table]
     -- subtract 1 for modulo (e.g. we want 0 - 6, not 1- 7)
 	k = math.floor(k) % (#table-1)
