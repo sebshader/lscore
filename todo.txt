@@ -1,0 +1,5 @@
+add symbolic capabilities to tohz?
+figure out meters/timekeeping system
+add tree scheduler stuff (accellerando/ decelerando tempo for all children of parent
+    tempo/environment)
+contemplate adding mutating versions of table transformation objects

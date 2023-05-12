@@ -185,12 +185,21 @@ end
 
 -- recursive map on f(value, ...)
 -- by S. Shader, needed to put after istable()
-local function rmap(table, f, ...)
-	-- need to pass varargs here because upvalue doesn't work
-	if istable(table) then return map(table, function(_, value, ...)
+local function rmap(inval, f, ...)
+	if istable(inval) then return map(inval, function(_, value, ...)
 			return rmap(value, f, ...)
-		end)
-	else return f(table, ...) end
+		end, ...)
+	else return f(inval, ...) end
+end
+
+-- mutating version (recursive)
+local function rmapm(t, f, ...)
+  if istable(t) then
+    for index, value in pairs(t) do
+      t[index] = rmapm(value, f, ...)
+    end
+    return t
+  else return f(t, ...) end
 end
 
 --- Checks if the given argument is an array. Assumes `obj` is an array
@@ -872,7 +881,8 @@ local comp = {
     countt = countt,
 	split = split,
     scaletou = scaletou,
-    scalefromu = scalefromu
+    scalefromu = scalefromu,
+    rmapm = rmapm
 }
 
 return comp

@@ -4,18 +4,18 @@ local mus = require 'mus'
 local pentatonic = {0, 2, 4, 7, 9, 12}
 
 TestMode = {
-    testIonian = function (_)
+    testIonian = function ()
         Lu.assertEquals(mus.mode(6), 11)
         Lu.assertEquals(mus.mode(7), 12)
         Lu.assertEquals(mus.mode(-2), -3)
     end,
-    testDorian = function (_)
+    testDorian = function ()
         Lu.assertEquals(mus.mode(6, 4), 10)
         Lu.assertEquals(mus.mode(-7, 4), -12)
         Lu.assertEquals(mus.mode(9, 4), 16)
         Lu.assertEquals(mus.mode(-2, 4), -3)
     end,
-    testCustom = function (_)
+    testCustom = function ()
         Lu.assertEquals(mus.mode(3, 0, pentatonic), 7)
         Lu.assertEquals(mus.mode(-7, 2, pentatonic), -16)
         Lu.assertEquals(mus.mode(-3, 0, pentatonic), -8)
@@ -80,10 +80,10 @@ function TestToNote()
 end
 
 TestToKey = {
-    testNumeric = function (_)
+    testNumeric = function ()
         Lu.assertEquals(mus.tokey(880), 81)
     end,
-    testSymbolic = function (_)
+    testSymbolic = function ()
         Lu.assertEquals(mus.tokey("c"), 60)
         Lu.assertEquals(mus.tokey("cs"), 61)
         Lu.assertEquals(mus.tokey("df"), 61)
@@ -97,4 +97,57 @@ TestToKey = {
     end
 }
 
+TestToHz = {
+    testKeyNums = function ()
+        Lu.assertEquals(mus.tohz(69), 440)
+        Lu.assertEquals(mus.tohz(81), 880)
+        Lu.assertAlmostEquals(mus.tohz(60), 261.6255653006, 2e-12)
+    end,
+    testNotes = function ()
+        Lu.assertEquals(mus.tohz("a"), 440)
+        Lu.assertAlmostEquals(mus.tohz("bs"), 523.2511306012, 2e-11)
+        Lu.assertAlmostEquals(mus.tohz("c5"), 523.2511306012, 2e-11)
+    end
+}
+
+function TestNote ()
+    local testNotes = {{60, 60.5}, 61}
+    Lu.assertEquals(mus.note(testNotes), {{"c4", "df<4"}, "df4"})
+end
+
+TestKeyNum = {
+    testNumeric = function ()
+        local testHz = {{440, 880}, 220}
+        Lu.assertEquals(mus.keynum(testHz), {{69, 81}, 57})
+    end,
+    testSymbolic = function ()
+        local testSyms = {{"bs<3", "cs>-1"}, "bf<-1"}
+        Lu.assertEquals(mus.keynum(testSyms), {{59.5, 1.5}, 9.5})
+    end,
+    testMixed = function ()
+        local testers = {"bs<3", {440, {"bf<-1"}, 880}}
+        Lu.assertEquals(mus.keynum(testers), {59.5, {69, {9.5}, 81}})
+    end
+}
+
+function TestToPc ()
+    Lu.assertEquals(mus.topc(60), 0)
+    Lu.assertAlmostEquals(mus.topc(71.99), 11.99, 1e-14)
+    Lu.assertEquals(mus.topc(48.5), 0.5)
+end
+
+function TestPclass ()
+    Lu.assertEquals(mus.pclass({60, 71.5, {48.5}}), {0, 11.5, {.5}})
+end
+
+function TestTrans ()
+    Lu.assertEquals(mus.trans(60, 35), 95)
+    Lu.assertEquals(mus.trans(-5, -8), -13)
+    Lu.assertEquals(mus.trans("b0", -8), 15)
+end
+
+function TestTranspose ()
+    local tester = {"bf0", 65, {"bf-1"}}
+    Lu.assertEquals(mus.transpose(tester, -4), {18, 61, {6}})
+end
 

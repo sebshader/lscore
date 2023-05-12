@@ -131,7 +131,7 @@ local function tokey(insym)
 end
 
 --translate notes or keynums to hz
-local function tohz(ref, octave)
+local function tohz(ref)
 	if type(ref) == "string" then
 		local keyn
 		local pos, _, str = string.find(ref, "(%a)")
@@ -150,11 +150,12 @@ local function tohz(ref, octave)
 			else keyn = keyn + .5 end
 		end
 		pos, _, str = string.find(ref, "([+-]?%d)", pos)
+        local octave
 		if pos then octave = tonumber(str) end
 		octave = octave or 4
 		ref = ((octave + 1)*12) + keyn
 	end
-	return 440*2^((ref - 69)/12), octave
+	return 440*2^((ref - 69)/12)
 end
 
 local function note(list)
@@ -162,23 +163,11 @@ local function note(list)
 end
 
 local function keynum(list)
-	if comp.istable(list) then
-		local lt = {}
-		for index,value in pairs(list) do
-			lt[index] = keynum(value)
-		end
-		return lt
-	else return tokey(list) end
+	return comp.rmap(list, tokey)
 end
 
-local function hertz(list, octave)
-	if comp.istable(list) then
-		local lt = {}
-		for index,value in pairs(list) do
-			lt[index], octave = hertz(value, octave)
-		end
-		return lt
-	else return tohz(list, octave) end
+local function hertz(list)
+	return comp.rmap(list, tohz)
 end
 
 local function isrest(ref)
@@ -189,7 +178,10 @@ end
 local function topc(insym)
 	local typein = type(insym)
 	if typein == "number" then
-		return math.floor((insym % 12) * 2) / 2
+        -- note should probably map directly to quarter-tone pitch class, even though
+        -- symbols don't
+        -- use math.floor if you only want integers
+		return insym % 12
 	elseif typein == "string" then
 		local keyn
 		local pos, _, str = string.find(insym, "(%a)")
@@ -204,10 +196,10 @@ local function topc(insym)
 		end
 		str = string.match(insym, "([<>])", pos)
 		if str then
-			if str == "<" then keyn = keyn - .5
+			if str == "<" then keyn = keyn - 0.5
 			else keyn = keyn + .5 end
 		end
-		return math.floor((keyn % 12) * 2) / 2
+		return math.floor((keyn % 12) * 2) * 0.5
 	end
 end
 
@@ -215,29 +207,17 @@ local function pclass(list)
 	return comp.rmap(list, topc)
 end
 
---if ref and amount are pitch classes, transposes to modn space.
---otherwise, ref is note or key list
-local function transpose(ref, amount)
-	if comp.istable(ref) then
-		if comp.isstring(ref[1]) then
-			ref = keynum(ref)
-			ref = comp.rmap(ref, function(value)
-				return value + amount end)
-			return note(ref)
-		else
-			ref = comp.rmap(ref, function(value)
-				return value + amount end)
-			return ref
-		end
-	else
-		if comp.isstring(ref) then
-			ref = tokey(ref)
-			ref = ref + amount
-			return tonote(ref)
-		elseif ref < 12 then return ref + amount % 12
-		else return ref + amount end
-	end
+local function trans(inthing, transpose)
+    if comp.isstring(inthing) then return (tokey(inthing) + transpose) end
+    return inthing + transpose
 end
+
+-- mutates array by transposing it
+local function transpose(ref, amount)
+    return comp.rmap(ref, trans, amount)
+end
+
+--mutating transpose
 
 --loadscala takes a string and
 --parses it into a scale table (array) of semitones
@@ -255,6 +235,7 @@ local mus = {
 	hertz = hertz,
 	isrest = isrest,
 	pclass = pclass,
+    trans = trans,
 	transpose = transpose,
 	ratiostep = ratiostep,
 	stepratio = stepratio,
