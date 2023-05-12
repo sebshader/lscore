@@ -9,7 +9,7 @@ TestMode = {
         Lu.assertEquals(mus.mode(7), 12)
         Lu.assertEquals(mus.mode(-2), -3)
     end,
-    testDorian = function ()
+    testPhrygian = function ()
         Lu.assertEquals(mus.mode(6, 4), 10)
         Lu.assertEquals(mus.mode(-7, 4), -12)
         Lu.assertEquals(mus.mode(9, 4), 16)
