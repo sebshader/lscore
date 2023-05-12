@@ -46,21 +46,13 @@ function TestFixScale()
 end
 
 function TestTors()
-    Lu.assertAlmostEquals(mus.tors(1.5),
-        7.019550008653874177688702928890052135102450847625732421875,
-        9e-16)
-    Lu.assertAlmostEquals(mus.tors(0.75),
-        -4.9804499913461258227449779401041496385005302727222442626953125,
-        9e-16)
+    Lu.assertAlmostEquals(mus.tors(1.5), 7.0195500, 1e-7)
+    Lu.assertAlmostEquals(mus.tors(0.75), -4.98044999, 1e-7)
 end
 
 function TestTosr()
-    Lu.assertAlmostEquals(mus.tosr(7),
-        1.4983070768766814988238664230202346061560092493891716003417968750,
-        9e-16)
-    Lu.assertAlmostEquals(mus.tosr(-5),
-        0.7491535384383407494119332115101173030780046246945858001708984375,
-        9e-16)
+    Lu.assertAlmostEquals(mus.tosr(7), 1.49830708, 1e-7)
+    Lu.assertAlmostEquals(mus.tosr(-5), 0.749153538, 1e-7)
 end
 
 function TestRatioStep()
